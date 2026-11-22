@@ -1,36 +1,78 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Doodle Arcade
 
-## Getting Started
-
-First, run the development server:
+A mini-games hub that looks like a kid drew it in a school notebook: wobbly
+pencil lines, crayon hatching, washi tape and sticky notes. Built with
+Next.js 16 (App Router), TypeScript, Tailwind CSS 4, Motion, rough.js and
+rough-notation.
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+npm run dev          # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+| Script                    | What it does                                  |
+| ------------------------- | --------------------------------------------- |
+| `npm run build` / `start` | Production build / server                     |
+| `npm run lint`            | ESLint                                        |
+| `npm run typecheck`       | Generates route types, then `tsc`             |
+| `npm test`                | Vitest (data, filtering, URL params, seeding) |
+| `npm run format`          | Prettier (sorts Tailwind classes too)         |
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Add a new game
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. Add one object to `src/data/games.ts`: `slug`, `title`, `category`,
+   `difficulty` (1–3), `players`, `avgMinutes`, `description`, `howToPlay`,
+   `controls`, `thumbnail`, `plays`, `addedAt`.
+2. Draw its doodle: add a component to `src/components/games/Thumbnails.tsx`
+   (160×110 grid, use the `RRect` / `RCircle` / `RPath` … primitives), add its
+   key to the `ThumbnailKey` union in `games.ts`, and register it in
+   `THUMBNAILS`. Give the moving part a `motion.g` with `shown` / `hover`
+   variants and it animates when the card is hovered.
+3. That's it. The hub card, the `/games/<slug>` detail page and modal, and the
+   `/games/<slug>/play` placeholder are all generated from the data. Tests check
+   that slugs are unique and every game has its own thumbnail.
 
-## Learn More
+Set `isFeatured: true` on exactly one game to put it on the big taped card.
 
-To learn more about Next.js, take a look at the following resources:
+## Tweak the motion
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Every spring, ease, duration and load-sequence time lives in
+`src/lib/motion.ts`. Components don't hard-code timing.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- `spring` / `softSpring` / `strokeEase`: the feel of everything.
+- `timeline`: when each part of the page-load sequence starts.
+- `stagger`, `cardDrop`, `lift`, `press`, `pageTurn`: card and page moves.
+- `cardVariants`: hidden → shown → hover → tap → erased for game cards.
 
-## Deploy on Vercel
+With `prefers-reduced-motion`, `<MotionConfig reducedMotion="user">` turns off
+transform and layout animation, and components fall back to 150ms fades.
+Line boil, parallax, star bursts and the page turn are skipped.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Turn off line boil
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+The "boiling" outline jitter (logo, mascot, active tab, hovered card) runs at
+8fps through `useBoil` in `src/hooks/useBoil.ts`. To freeze it everywhere:
+
+```bash
+NEXT_PUBLIC_LINE_BOIL=off npm run dev
+```
+
+It also stops by itself when the tab is hidden or reduced motion is on.
+
+## How it fits together
+
+- **Hand-drawn shapes:** `src/lib/rough.ts` wraps the rough.js generator (pure
+  JS, so it runs during SSR) and memoizes every shape by size and seed.
+  `SketchBox` measures its element and draws border, fill and shadow behind
+  the content.
+- **No hydration drift:** every "random" value (card tilt, tape color, letter
+  jitter, rough.js seed) comes from `src/lib/seed.ts`, keyed by the game slug.
+- **State in the URL:** search, tab, sort, difficulty and favorites-only live
+  in the query string, so links are shareable and Back works. Favorites are
+  stored in `localStorage`.
+- **Detail modal:** `src/app/@modal/(.)games/[slug]` intercepts soft
+  navigation, so a card opens a torn-out page over the hub. A direct link or
+  refresh shows the full page at `src/app/games/[slug]`.
+- **Palette:** CSS variables in `src/app/globals.css`, mirrored in
+  `src/lib/palette.ts` for rough.js. Text is always graphite, and crayon colors
+  are only used for fills and strokes, so everything passes WCAG AA.

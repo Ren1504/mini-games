@@ -1,26 +1,196 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+/* ── Palette (mirrored in src/lib/palette.ts for rough.js) ───────────── */
+@theme {
+  --color-paper: #fdfbf4;
+  --color-card: #fffdf7;
+  --color-rule: #a7c7e7;
+  --color-margin: #e88b8b;
+  --color-graphite: #2b2b2b;
+  --color-sketch: #5a5a5a;
+  --color-sticky: #fff2a1;
+  --color-crayon-red: #e4572e;
+  --color-crayon-blue: #3a86ff;
+  --color-crayon-yellow: #ffbe0b;
+  --color-crayon-green: #43aa8b;
+  --color-crayon-purple: #8e5cf7;
+  --color-crayon-orange: #fb8500;
+  --color-highlighter: rgb(255 241 118 / 0.7);
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+  --animate-caret: caret 1s steps(1) infinite;
+  @keyframes caret {
+    50% {
+      opacity: 0;
+    }
   }
 }
 
+@theme inline {
+  --font-hand: var(--font-gochi), "Comic Sans MS", cursive;
+  --font-body: var(--font-patrick), "Comic Sans MS", cursive;
+  --font-note: var(--font-caveat), "Comic Sans MS", cursive;
+}
+
+:root {
+  color-scheme: light;
+  /* Red margin line position; content starts a gutter to its right. */
+  --margin-x: 14px;
+  --page-gutter: 16px;
+}
+
+@media (min-width: 640px) {
+  :root {
+    --margin-x: 44px;
+    --page-gutter: 28px;
+  }
+}
+
+@media (min-width: 1024px) {
+  :root {
+    --margin-x: 84px;
+    --page-gutter: 40px;
+  }
+}
+
+html {
+  scrollbar-gutter: stable;
+  scroll-behavior: smooth;
+}
+
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+  background: var(--color-paper);
+  color: var(--color-graphite);
+  font-family: var(--font-body);
+  /* Handwriting needs room: ≥ 18px and 1.5 line height everywhere. */
+  font-size: 1.125rem;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+.page-x {
+  padding-left: calc(var(--margin-x) + var(--page-gutter));
+  padding-right: var(--page-gutter);
+}
+
+/* Keeps graphite labels legible on top of crayon hatching. */
+.text-paper-halo {
+  text-shadow:
+    0 0 3px var(--color-paper),
+    0 0 6px var(--color-paper);
+}
+
+/* ── Paper ──────────────────────────────────────────────────────────── */
+.paper-rules {
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent 0 31px,
+    rgb(167 199 231 / 0.4) 31px 32px
+  );
+  background-position: 0 96px;
+}
+
+.paper-margin {
+  left: var(--margin-x);
+  width: 2px;
+  background: var(--color-margin);
+  opacity: 0.85;
+  box-shadow: 4px 0 0 rgb(232 139 139 / 0.35);
+}
+
+.paper-hole {
+  background: #e9e4d4;
+  box-shadow:
+    inset 2px 3px 4px rgb(43 43 43 / 0.28),
+    0 1px 0 rgb(255 255 255 / 0.9);
+}
+
+.paper-grain {
+  opacity: 0.06;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+.paper-vignette {
+  background: radial-gradient(
+    ellipse 140% 110% at center,
+    transparent 60%,
+    rgb(120 100 60 / 0.07) 85%,
+    rgb(90 70 40 / 0.14) 100%
+  );
+}
+
+.sticky-note {
+  background: linear-gradient(
+    170deg,
+    #fff6b8 0%,
+    var(--color-sticky) 60%,
+    #f9e57d 100%
+  );
+  clip-path: polygon(0.6% 1.2%, 99.2% 0%, 100% 88%, 88% 100%, 1.4% 99.2%);
+}
+
+/* Curled corner: a soft shadow peeking out under the folded corner. */
+.sticky-note-wrap {
+  filter: drop-shadow(0 6px 6px rgb(43 43 43 / 0.16));
+}
+
+.sticky-note::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 12%;
+  height: 12%;
+  background: linear-gradient(
+    135deg,
+    #f0d860 0%,
+    #e5c94a 45%,
+    rgb(0 0 0 / 0.08) 50%,
+    transparent 52%
+  );
+}
+
+.torn-paper {
+  background-color: var(--color-card);
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent 0 31px,
+    rgb(167 199 231 / 0.35) 31px 32px
+  );
+  background-position: 0 40px;
+}
+
+/* ── Cursor & focus ─────────────────────────────────────────────────── */
+@media (hover: hover) and (pointer: fine) {
+  html.pencil-cursor,
+  html.pencil-cursor * {
+    cursor: none !important;
+  }
+}
+
+:focus-visible {
+  outline: 3px solid var(--color-crayon-blue);
+  outline-offset: 3px;
+  border-radius: 6px;
+}
+
+/* The crayon focus ring overlay replaces the outline once it's running. */
+html.sketch-focus :focus-visible {
+  outline: none;
+}
+
+@media (forced-colors: active) {
+  html.sketch-focus :focus-visible {
+    outline: 3px solid CanvasText;
+  }
+}
+
+/* Search field: the sketch box draws the border; hide native chrome. */
+input[type="search"]::-webkit-search-cancel-button {
+  appearance: none;
 }

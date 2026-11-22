@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
-import { games, getGame } from "@/games/registry";
+import { GameDetail } from "@/components/games/GameDetail";
+import { TornEdge } from "@/components/paper/TornEdge";
+import { games, getGame } from "@/data/games";
 
 export function generateStaticParams() {
-  return games.map((game) => ({ slug: game.slug }));
+  return games.map((g) => ({ slug: g.slug }));
 }
 
 export async function generateMetadata({
@@ -15,22 +16,19 @@ export async function generateMetadata({
 }
 
 export default async function GamePage({ params }: PageProps<"/games/[slug]">) {
-  const game = getGame((await params).slug);
-  if (!game) notFound();
+  const { slug } = await params;
+  if (!getGame(slug)) notFound();
 
-  const { Component } = game;
   return (
-    <main className="mx-auto w-full max-w-4xl flex-1 px-6 py-16">
-      <Link
-        href="/"
-        className="text-sm text-zinc-600 hover:underline dark:text-zinc-400"
-      >
-        ← All games
-      </Link>
-      <h1 className="mt-4 mb-10 text-3xl font-semibold tracking-tight">
-        {game.title}
-      </h1>
-      <Component />
+    <main id="main" className="page-x flex-1 pt-10 sm:pt-14">
+      <div className="mx-auto max-w-5xl">
+        <TornEdge
+          seed={slug}
+          paperClassName="relative px-5 pt-14 pb-10 sm:px-10 sm:pt-16"
+        >
+          <GameDetail slug={slug} />
+        </TornEdge>
+      </div>
     </main>
   );
 }

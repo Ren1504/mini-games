@@ -1,28 +1,40 @@
-import Link from "next/link";
-import { games } from "@/games/registry";
+import { FeaturedGame } from "@/components/games/FeaturedGame";
+import { GameGrid } from "@/components/games/GameGrid";
+import { CategoryTabs } from "@/components/layout/CategoryTabs";
+import { Hero } from "@/components/layout/Hero";
+import { HowToPlay } from "@/components/layout/HowToPlay";
+import { MarginDoodles } from "@/components/layout/MarginDoodles";
+import { SortNote } from "@/components/layout/SortNote";
+import { PageEdge } from "@/components/sketch/PageEdge";
 
 export default function Home() {
   return (
-    <main className="mx-auto w-full max-w-4xl flex-1 px-6 py-16">
-      <h1 className="text-4xl font-semibold tracking-tight">Mini Games</h1>
-      <p className="mt-2 text-zinc-600 dark:text-zinc-400">
-        Pick a game and play right in your browser.
-      </p>
-      <ul className="mt-10 grid gap-4 sm:grid-cols-2">
-        {games.map((game) => (
-          <li key={game.slug}>
-            <Link
-              href={`/games/${game.slug}`}
-              className="block h-full rounded-xl border border-black/10 p-5 transition-colors hover:bg-black/[.04] dark:border-white/15 dark:hover:bg-white/[.06]"
-            >
-              <h2 className="text-lg font-medium">{game.title}</h2>
-              <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
-                {game.description}
-              </p>
-            </Link>
-          </li>
-        ))}
-      </ul>
+    <main id="main" className="relative flex-1">
+      <MarginDoodles />
+      <Hero />
+      <div className="page-x mt-14 sm:mt-16">
+        <FeaturedGame />
+      </div>
+      <section
+        id="games"
+        aria-labelledby="games-heading"
+        className="page-x mt-16 scroll-mt-6 sm:mt-20"
+      >
+        <div className="mx-auto max-w-7xl">
+          <h2 id="games-heading" className="sr-only">
+            All games
+          </h2>
+          <div className="flex flex-col gap-8 lg:flex-row lg:items-start lg:justify-between">
+            <div className="flex-1">
+              <CategoryTabs />
+              <PageEdge seed="tabs-edge" />
+            </div>
+            <SortNote />
+          </div>
+          <GameGrid />
+        </div>
+      </section>
+      <HowToPlay />
     </main>
   );
 }
