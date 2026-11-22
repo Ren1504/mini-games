@@ -50,7 +50,7 @@ export function EmptyState({
         <RPath
           d="M88 54 C90 60 92 62 90 66"
           seed={203}
-          stroke="#3A86FF"
+          stroke="var(--color-crayon-blue)"
           strokeWidth={2}
           draw
           delay={0.7}
@@ -59,7 +59,7 @@ export function EmptyState({
         <RPath
           d="M150 96 C136 92 134 74 146 66 C150 56 166 54 174 62 C188 62 194 78 186 88 C182 100 162 102 150 96 Z"
           seed={204}
-          fill="#F1ECDD"
+          fill="var(--color-key)"
           fillStyle="solid"
           strokeWidth={2}
         />

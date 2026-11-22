@@ -48,6 +48,18 @@ With `prefers-reduced-motion`, `<MotionConfig reducedMotion="user">` turns off
 transform and layout animation, and components fall back to 150ms fades.
 Line boil, parallax, star bursts and the page turn are skipped.
 
+## Light & dark (notebook ↔ chalkboard)
+
+The sun/moon button in the top-right corner switches between the notebook
+(light) and a chalkboard (dark). The first visit follows the device's
+setting; once someone clicks, their choice is saved in `localStorage`.
+
+All colors are CSS variables in `src/app/globals.css`: the light set in
+`@theme static`, the chalk set under `:root[data-theme="dark"]`.
+`src/lib/palette.ts` hands those variables to rough.js, so every drawing
+recolors without being redrawn. A tiny inline script in `layout.tsx` sets
+`data-theme` before first paint, so the page never flashes the wrong theme.
+
 ## Turn off line boil
 
 The "boiling" outline jitter (logo, mascot, active tab, hovered card) runs at
@@ -73,6 +85,7 @@ It also stops by itself when the tab is hidden or reduced motion is on.
 - **Detail modal:** `src/app/@modal/(.)games/[slug]` intercepts soft
   navigation, so a card opens a torn-out page over the hub. A direct link or
   refresh shows the full page at `src/app/games/[slug]`.
-- **Palette:** CSS variables in `src/app/globals.css`, mirrored in
-  `src/lib/palette.ts` for rough.js. Text is always graphite, and crayon colors
-  are only used for fills and strokes, so everything passes WCAG AA.
+- **Palette:** CSS variables in `src/app/globals.css`, referenced from
+  `src/lib/palette.ts` for rough.js. Text is always graphite (pencil or chalk),
+  and crayon colors are only used for fills and strokes, so text stays
+  readable in both themes.

@@ -127,7 +127,7 @@ export function SketchBox({
       shadowPaths = shapeOf({
         seed: base + 3,
         stroke: "none",
-        fill: ink.graphite,
+        fill: ink.shadow,
         fillStyle: "hachure",
         hachureGap: 4.5,
         hachureAngle: 60,

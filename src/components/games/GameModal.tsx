@@ -94,7 +94,7 @@ export function GameModal({ slug }: { slug: string }) {
         >
           <motion.div
             aria-hidden="true"
-            className="fixed inset-0 bg-graphite/40"
+            className="fixed inset-0 bg-black/45"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}

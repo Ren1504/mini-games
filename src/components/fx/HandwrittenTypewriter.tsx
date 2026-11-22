@@ -49,10 +49,10 @@ export function HandwrittenTypewriter({
       >
         <path
           d="M5 2 L5 18 M3.2 18 L5 22.5 L6.8 18 Z"
-          stroke="#5A5A5A"
+          stroke="var(--color-sketch)"
           strokeWidth="2"
           strokeLinecap="round"
-          fill="#5A5A5A"
+          fill="var(--color-sketch)"
         />
       </svg>
     </span>

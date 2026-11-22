@@ -76,7 +76,7 @@ export function Footer() {
           </g>
         ))}
       </svg>
-      <div className="page-x flex flex-wrap items-end justify-between gap-2 bg-[#f6f1df] pt-3 pb-6">
+      <div className="page-x flex flex-wrap items-end justify-between gap-2 bg-footer pt-3 pb-6">
         <p className="text-lg">
           made with{" "}
           <span role="img" aria-label="crayons">

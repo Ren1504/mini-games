@@ -44,6 +44,8 @@ export const duration = {
   /** Replacement fade when prefers-reduced-motion is on. */
   reduced: 0.15,
   sunTurn: 60,
+  /** Circular wipe when switching light ↔ dark. */
+  themeWipe: 0.55,
 } as const;
 
 // ── Load sequence (seconds from first paint) ────────────────────────

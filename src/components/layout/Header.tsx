@@ -14,6 +14,7 @@ import { useHubParams } from "@/hooks/useHubParams";
 import { timeline } from "@/lib/motion";
 import { crayon } from "@/lib/palette";
 import { Mascot } from "./Mascot";
+import { ThemeToggle } from "./ThemeToggle";
 
 function Logo() {
   const frame = useBoil(true);
@@ -28,7 +29,7 @@ function Logo() {
           text="Doodle Arcade"
           seed="logo"
           popInAt={timeline.logo}
-          className="block font-hand text-[2.5rem] leading-none sm:text-5xl"
+          className="block font-hand text-[clamp(1.5rem,7.2vw,2.1rem)] leading-none sm:text-5xl"
         />
       </span>
       <Scribble
@@ -107,7 +108,7 @@ function SoundToggle() {
       <SketchBox
         seed="sound"
         shape="ellipse"
-        className="grid size-12 place-items-center"
+        className="grid size-10 place-items-center sm:size-12"
         inset={2}
       >
         <DoodleIcon name={enabled ? "speaker" : "speaker-off"} size={26} />
@@ -178,16 +179,21 @@ function MainNav({ pathname }: { pathname: string | null }) {
 export function Header() {
   return (
     <header className="page-x pt-5 sm:pt-8">
-      <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-x-6 gap-y-2">
-        <div className="flex items-end gap-2 sm:gap-3">
+      {/* Phones: logo + toggles on row 1 (toggles top-right), nav on row 2.
+          Wider: logo … nav, sound, theme in one row. */}
+      <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-x-2 gap-y-2 sm:gap-x-5">
+        <div className="order-1 mr-auto flex items-end gap-2 sm:gap-3">
           <Mascot />
           <Logo />
         </div>
-        <div className="flex items-center gap-3 sm:gap-5">
+        <div className="order-3 w-full sm:order-2 sm:w-auto">
           <Suspense fallback={<MainNav pathname={null} />}>
             <RouteAwareNav />
           </Suspense>
+        </div>
+        <div className="order-2 flex shrink-0 items-center gap-1 sm:order-3 sm:gap-3">
           <SoundToggle />
+          <ThemeToggle />
         </div>
       </div>
     </header>

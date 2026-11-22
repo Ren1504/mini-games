@@ -93,7 +93,7 @@ function StarBurst({
             <path
               d={STAR}
               fill={COLORS[i % COLORS.length]}
-              stroke="#2B2B2B"
+              stroke="var(--color-graphite)"
               strokeWidth={0.8}
               strokeLinejoin="round"
             />

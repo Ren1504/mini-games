@@ -1,31 +1,40 @@
 /**
- * JS mirror of the CSS palette in globals.css. rough.js needs real color
- * strings, so the hex values live here too. Keep both files in sync.
+ * Colors for rough.js and inline SVG. Each value is a CSS variable defined
+ * in globals.css, so one `data-theme` switch on <html> recolors every
+ * drawing (light notebook ↔ chalkboard) without regenerating any shapes.
+ * The light-theme hex values live in globals.css next to the dark ones.
  */
 export const ink = {
-  graphite: "#2B2B2B",
-  sketch: "#5A5A5A",
-  paper: "#FDFBF4",
-  card: "#FFFDF7",
-  rule: "#A7C7E7",
-  margin: "#E88B8B",
-  sticky: "#FFF2A1",
+  /** Pencil (light) / chalk (dark): primary text and strokes. */
+  graphite: "var(--color-graphite)",
+  /** Lighter sketch lines and secondary text. */
+  sketch: "var(--color-sketch)",
+  paper: "var(--color-paper)",
+  /** Card and torn-page paper. */
+  card: "var(--color-card)",
+  rule: "var(--color-rule)",
+  margin: "var(--color-margin)",
+  sticky: "var(--color-sticky)",
+  /** Pencil-hatched drop shadows (stays dark in both themes). */
+  shadow: "var(--color-shadow)",
+  /** Keyboard keys and crumpled paper. */
+  key: "var(--color-key)",
 } as const;
 
 export const crayon = {
-  red: "#E4572E",
-  blue: "#3A86FF",
-  yellow: "#FFBE0B",
-  green: "#43AA8B",
-  purple: "#8E5CF7",
-  orange: "#FB8500",
+  red: "var(--color-crayon-red)",
+  blue: "var(--color-crayon-blue)",
+  yellow: "var(--color-crayon-yellow)",
+  green: "var(--color-crayon-green)",
+  purple: "var(--color-crayon-purple)",
+  orange: "var(--color-crayon-orange)",
 } as const;
 
 export type CrayonName = keyof typeof crayon;
 
-export const highlighter = "rgba(255, 241, 118, 0.7)";
+export const highlighter = "var(--color-highlighter)";
 
-/** Washi tape tints: crayon colors, semi-transparent like real tape. */
+/** Washi tape tints: semi-transparent like real tape (same in both themes). */
 export const tapeColors = [
   "rgba(228, 87, 46, 0.55)",
   "rgba(58, 134, 255, 0.5)",

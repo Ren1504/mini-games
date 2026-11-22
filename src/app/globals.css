@@ -1,7 +1,12 @@
 @import "tailwindcss";
 
-/* ── Palette (mirrored in src/lib/palette.ts for rough.js) ───────────── */
-@theme {
+/* ── Palette ─────────────────────────────────────────────────────────
+ * Light = pencil & crayon on notebook paper. Dark = chalk on a chalkboard.
+ * src/lib/palette.ts hands these variables to rough.js, so drawings
+ * recolor with the theme. "static" emits every variable even when no
+ * utility class uses it (palette.ts reads them from JS).
+ */
+@theme static {
   --color-paper: #fdfbf4;
   --color-card: #fffdf7;
   --color-rule: #a7c7e7;
@@ -16,6 +21,9 @@
   --color-crayon-purple: #8e5cf7;
   --color-crayon-orange: #fb8500;
   --color-highlighter: rgb(255 241 118 / 0.7);
+  --color-shadow: #2b2b2b;
+  --color-key: #f1ece0;
+  --color-footer: #f6f1df;
 
   --animate-caret: caret 1s steps(1) infinite;
   @keyframes caret {
@@ -33,6 +41,11 @@
 
 :root {
   color-scheme: light;
+  --rule-line: rgb(167 199 231 / 0.4);
+  --margin-glow: rgb(232 139 139 / 0.35);
+  --hole: #e9e4d4;
+  --vignette: rgb(120 100 60 / 0.07);
+  --vignette-edge: rgb(90 70 40 / 0.14);
   /* Red margin line position; content starts a gutter to its right. */
   --margin-x: 14px;
   --page-gutter: 16px;
@@ -50,6 +63,33 @@
     --margin-x: 84px;
     --page-gutter: 40px;
   }
+}
+
+/* Chalkboard. Set on <html> by the inline script in layout.tsx before
+   first paint (stored choice, else the system setting). */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --color-paper: #22302a;
+  --color-card: #2a3a33;
+  --color-rule: #7fa3c2;
+  --color-margin: #d98c8c;
+  --color-graphite: #efede4;
+  --color-sketch: #b7bdb4;
+  --color-crayon-red: #ff8a6b;
+  --color-crayon-blue: #7fb2ff;
+  --color-crayon-yellow: #ffd45c;
+  --color-crayon-green: #6fd3ae;
+  --color-crayon-purple: #b79cff;
+  --color-crayon-orange: #ffaa4d;
+  --color-highlighter: rgb(255 241 118 / 0.35);
+  --color-shadow: #0b110e;
+  --color-key: #34463e;
+  --color-footer: #1b2621;
+  --rule-line: rgb(239 237 228 / 0.07);
+  --margin-glow: rgb(217 140 140 / 0.15);
+  --hole: #18211d;
+  --vignette: rgb(0 0 0 / 0.18);
+  --vignette-edge: rgb(0 0 0 / 0.38);
 }
 
 html {
@@ -90,7 +130,7 @@ body {
   background-image: repeating-linear-gradient(
     to bottom,
     transparent 0 31px,
-    rgb(167 199 231 / 0.4) 31px 32px
+    var(--rule-line) 31px 32px
   );
   background-position: 0 96px;
 }
@@ -100,11 +140,11 @@ body {
   width: 2px;
   background: var(--color-margin);
   opacity: 0.85;
-  box-shadow: 4px 0 0 rgb(232 139 139 / 0.35);
+  box-shadow: 4px 0 0 var(--margin-glow);
 }
 
 .paper-hole {
-  background: #e9e4d4;
+  background: var(--hole);
   box-shadow:
     inset 2px 3px 4px rgb(43 43 43 / 0.28),
     0 1px 0 rgb(255 255 255 / 0.9);
@@ -119,8 +159,8 @@ body {
   background: radial-gradient(
     ellipse 140% 110% at center,
     transparent 60%,
-    rgb(120 100 60 / 0.07) 85%,
-    rgb(90 70 40 / 0.14) 100%
+    var(--vignette) 85%,
+    var(--vignette-edge) 100%
   );
 }
 
@@ -135,8 +175,15 @@ body {
 }
 
 /* Curled corner: a soft shadow peeking out under the folded corner. */
+/* A sticky note is yellow paper in both themes, so it keeps pencil colors. */
 .sticky-note-wrap {
-  filter: drop-shadow(0 6px 6px rgb(43 43 43 / 0.16));
+  filter: drop-shadow(0 6px 6px rgb(0 0 0 / 0.2));
+  --color-graphite: #2b2b2b;
+  --color-sketch: #5a5a5a;
+  --color-paper: #fff2a1;
+  --color-crayon-red: #e4572e;
+  --color-crayon-yellow: #ffbe0b;
+  color: var(--color-graphite);
 }
 
 .sticky-note::after {
@@ -160,7 +207,7 @@ body {
   background-image: repeating-linear-gradient(
     to bottom,
     transparent 0 31px,
-    rgb(167 199 231 / 0.35) 31px 32px
+    var(--rule-line) 31px 32px
   );
   background-position: 0 40px;
 }
@@ -193,4 +240,38 @@ html.sketch-focus :focus-visible {
 /* Search field: the sketch box draws the border; hide native chrome. */
 input[type="search"]::-webkit-search-cancel-button {
   appearance: none;
+}
+
+/* Theme switch: a circular chalk-wipe reveal from the toggle button
+   (View Transitions; browsers without it just switch instantly). */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+/* Sun/moon toggle: both icons share one grid cell; the theme picks one. */
+.theme-icon {
+  grid-area: 1 / 1;
+  display: grid;
+  transition:
+    opacity 0.3s,
+    transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.theme-icon-moon,
+:root[data-theme="dark"] .theme-icon-sun {
+  opacity: 0;
+  transform: rotate(-90deg) scale(0.4);
+}
+
+:root[data-theme="dark"] .theme-icon-moon {
+  opacity: 1;
+  transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .theme-icon {
+    transition: opacity 0.15s;
+  }
 }

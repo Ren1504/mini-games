@@ -21,7 +21,7 @@ function Key({ label, seed }: { label: string; seed: string }) {
     <SketchBox
       as="kbd"
       seed={seed}
-      fill="#F1ECDD"
+      fill="var(--color-key)"
       fillStyle="solid"
       strokeWidth={1.8}
       shadow="rest"
