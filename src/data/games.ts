@@ -1,9 +1,11 @@
 import type { CrayonName } from "@/lib/palette";
 
-export type CategoryId = "puzzle" | "arcade" | "board" | "word" | "classic";
+export type CategoryId =
+  "puzzle" | "arcade" | "board" | "word" | "classic" | "party";
 export type TabId = "all" | CategoryId | "two-player";
 export type Difficulty = 1 | 2 | 3;
-export type PlayerCount = 1 | 2;
+/** How many people can play, inclusive (e.g. 1–2, or 3–12 for party games). */
+export type PlayerRange = { min: number; max: number };
 
 /** Key into the doodle thumbnail map (components/games/Thumbnails.tsx). */
 export type ThumbnailKey =
@@ -22,7 +24,8 @@ export type ThumbnailKey =
   | "connect-four"
   | "word-search"
   | "checkers"
-  | "chess";
+  | "chess"
+  | "imposter";
 
 export type Control = { keys: readonly string[]; action: string };
 
@@ -32,7 +35,7 @@ export type Game = {
   title: string;
   category: CategoryId;
   difficulty: Difficulty;
-  players: readonly PlayerCount[];
+  players: PlayerRange;
   avgMinutes: number;
   description: string;
   howToPlay: readonly string[];
@@ -55,6 +58,7 @@ export const tabs: readonly Tab[] = [
   { id: "word", label: "Word", color: "orange" },
   { id: "classic", label: "Classic", color: "green" },
   { id: "two-player", label: "2-Player", color: "yellow" },
+  { id: "party", label: "Party", color: "pink" },
 ];
 
 export const categoryColor: Record<CategoryId, CrayonName> = {
@@ -63,6 +67,7 @@ export const categoryColor: Record<CategoryId, CrayonName> = {
   board: "blue",
   word: "orange",
   classic: "green",
+  party: "pink",
 };
 
 export const categoryLabel: Record<CategoryId, string> = {
@@ -71,6 +76,7 @@ export const categoryLabel: Record<CategoryId, string> = {
   board: "Board",
   word: "Word",
   classic: "Classic",
+  party: "Party",
 };
 
 const arrows: Control = { keys: ["←", "↑", "↓", "→"], action: "Move" };
@@ -83,7 +89,7 @@ export const games: readonly Game[] = [
     title: "Snake",
     category: "arcade",
     difficulty: 2,
-    players: [1],
+    players: { min: 1, max: 1 },
     avgMinutes: 5,
     description: "Gobble apples, grow longer, and don't bite your own tail.",
     howToPlay: [
@@ -104,7 +110,7 @@ export const games: readonly Game[] = [
     title: "Tic-Tac-Toe",
     category: "classic",
     difficulty: 1,
-    players: [1, 2],
+    players: { min: 1, max: 2 },
     avgMinutes: 2,
     description: "Three in a row wins. Beat a friend or the doodle bot.",
     howToPlay: [
@@ -125,7 +131,7 @@ export const games: readonly Game[] = [
     title: "Memory Match",
     category: "puzzle",
     difficulty: 1,
-    players: [1, 2],
+    players: { min: 1, max: 2 },
     avgMinutes: 4,
     description: "Flip two cards at a time and find every matching pair.",
     howToPlay: [
@@ -146,7 +152,7 @@ export const games: readonly Game[] = [
     title: "Hangman",
     category: "word",
     difficulty: 2,
-    players: [1, 2],
+    players: { min: 1, max: 2 },
     avgMinutes: 4,
     description:
       "Guess the secret word one letter at a time before the drawing is done.",
@@ -168,7 +174,7 @@ export const games: readonly Game[] = [
     title: "Pong",
     category: "arcade",
     difficulty: 2,
-    players: [1, 2],
+    players: { min: 1, max: 2 },
     avgMinutes: 3,
     description:
       "Bounce the ball past your rival's paddle. First to seven wins.",
@@ -193,7 +199,7 @@ export const games: readonly Game[] = [
     title: "Flappy Doodle",
     category: "arcade",
     difficulty: 3,
-    players: [1],
+    players: { min: 1, max: 1 },
     avgMinutes: 3,
     description: "Flap a paper bird through the gaps between pencil pipes.",
     howToPlay: [
@@ -214,7 +220,7 @@ export const games: readonly Game[] = [
     title: "2048",
     category: "puzzle",
     difficulty: 3,
-    players: [1],
+    players: { min: 1, max: 1 },
     avgMinutes: 8,
     description: "Slide numbered tiles, merge the matches, and reach 2048.",
     howToPlay: [
@@ -235,7 +241,7 @@ export const games: readonly Game[] = [
     title: "Minesweeper",
     category: "classic",
     difficulty: 3,
-    players: [1],
+    players: { min: 1, max: 1 },
     avgMinutes: 6,
     description:
       "Use the number clues to clear the field without hitting a mine.",
@@ -260,7 +266,7 @@ export const games: readonly Game[] = [
     title: "Rock Paper Scissors",
     category: "classic",
     difficulty: 1,
-    players: [1, 2],
+    players: { min: 1, max: 2 },
     avgMinutes: 1,
     description: "Rock beats scissors, scissors beat paper, paper beats rock.",
     howToPlay: [
@@ -281,7 +287,7 @@ export const games: readonly Game[] = [
     title: "Whack-a-Mole",
     category: "arcade",
     difficulty: 1,
-    players: [1],
+    players: { min: 1, max: 1 },
     avgMinutes: 2,
     description: "Moles pop up fast. Bonk as many as you can in 30 seconds.",
     howToPlay: [
@@ -302,7 +308,7 @@ export const games: readonly Game[] = [
     title: "Dots & Boxes",
     category: "classic",
     difficulty: 2,
-    players: [2],
+    players: { min: 2, max: 2 },
     avgMinutes: 5,
     description: "Connect the dots. Close a box to claim it and go again.",
     howToPlay: [
@@ -323,7 +329,7 @@ export const games: readonly Game[] = [
     title: "Sudoku",
     category: "puzzle",
     difficulty: 3,
-    players: [1],
+    players: { min: 1, max: 1 },
     avgMinutes: 15,
     description: "Fill the grid so every row, column and box has 1 to 9.",
     howToPlay: [
@@ -347,7 +353,7 @@ export const games: readonly Game[] = [
     title: "Connect Four",
     category: "board",
     difficulty: 2,
-    players: [1, 2],
+    players: { min: 1, max: 2 },
     avgMinutes: 5,
     description:
       "Drop discs into the grid and line up four before your rival does.",
@@ -372,7 +378,7 @@ export const games: readonly Game[] = [
     title: "Word Search",
     category: "word",
     difficulty: 1,
-    players: [1],
+    players: { min: 1, max: 1 },
     avgMinutes: 6,
     description:
       "Find the hidden words in a jumble of letters and circle them.",
@@ -394,7 +400,7 @@ export const games: readonly Game[] = [
     title: "Checkers",
     category: "board",
     difficulty: 2,
-    players: [1, 2],
+    players: { min: 1, max: 2 },
     avgMinutes: 12,
     description: "Hop over your rival's pieces and crown your own kings.",
     howToPlay: [
@@ -415,7 +421,7 @@ export const games: readonly Game[] = [
     title: "Chess",
     category: "board",
     difficulty: 3,
-    players: [1, 2],
+    players: { min: 1, max: 2 },
     avgMinutes: 20,
     description: "The classic battle of kings, queens and sneaky knights.",
     howToPlay: [
@@ -429,6 +435,32 @@ export const games: readonly Game[] = [
     isFeatured: false,
     plays: 26080,
     addedAt: "2026-09-09",
+  },
+  {
+    id: "g17",
+    slug: "imposter-word-game",
+    title: "Imposter Word Game",
+    category: "party",
+    difficulty: 2,
+    players: { min: 3, max: 12 },
+    avgMinutes: 10,
+    description:
+      "Everyone gets the same secret word except one imposter, who has to bluff and blend in.",
+    howToPlay: [
+      "Everyone secretly sees the same word, except one player: the imposter.",
+      "Take turns saying one clue about the word, without giving it away.",
+      "The imposter doesn't know the word, so they bluff to blend in.",
+      "Vote for who you think the imposter is. Catch them to win, or they win by staying hidden!",
+    ],
+    controls: [
+      { keys: ["Tap"], action: "See your secret word" },
+      { keys: ["Tap"], action: "Vote for the imposter" },
+    ],
+    thumbnail: "imposter",
+    isNew: true,
+    isFeatured: false,
+    plays: 0,
+    addedAt: "2026-11-23",
   },
 ];
 

@@ -36,7 +36,9 @@ describe("games data", () => {
     for (const t of tabs) {
       if (t.id === "all") continue;
       const hits = games.filter((g) =>
-        t.id === "two-player" ? g.players.includes(2) : g.category === t.id,
+        t.id === "two-player"
+          ? g.players.min <= 2 && g.players.max >= 2
+          : g.category === t.id,
       );
       expect(hits.length, t.id).toBeGreaterThan(0);
     }

@@ -7,7 +7,7 @@ import {
   categoryLabel,
   type CategoryId,
   type Difficulty,
-  type PlayerCount,
+  type PlayerRange,
 } from "@/data/games";
 import { crayon, ink } from "@/lib/palette";
 
@@ -59,19 +59,32 @@ export function DifficultyStars({ level }: { level: Difficulty }) {
   );
 }
 
-export function Players({ players }: { players: readonly PlayerCount[] }) {
-  const two = players.includes(2);
-  const one = players.includes(1);
-  const label = one && two ? "1 or 2 players" : two ? "2 players" : "1 player";
-  const text = one && two ? "1–2P" : two ? "2P" : "1P";
+/** "1P", "1–2P", "3–12P" with one, two or three stick figures. */
+export function Players({ players }: { players: PlayerRange }) {
+  const { min, max } = players;
+  const label =
+    min === max
+      ? `${min} ${min === 1 ? "player" : "players"}`
+      : max - min === 1
+        ? `${min} or ${max} players`
+        : `${min} to ${max} players`;
+  const text = min === max ? `${min}P` : `${min}–${max}P`;
+  const figures = Math.min(max, 3);
   return (
     <span
       role="img"
       aria-label={label}
       className="inline-flex items-center text-lg"
     >
-      <DoodleIcon name="person" size={20} seed={3} />
-      {two && <DoodleIcon name="person" size={20} seed={9} className="-ml-2" />}
+      {[3, 9, 15].slice(0, figures).map((seed, i) => (
+        <DoodleIcon
+          key={seed}
+          name="person"
+          size={20}
+          seed={seed}
+          className={i > 0 ? "-ml-2" : undefined}
+        />
+      ))}
       <span aria-hidden="true" className="ml-0.5">
         {text}
       </span>

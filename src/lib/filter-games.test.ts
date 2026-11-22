@@ -21,7 +21,7 @@ describe("filterGames", () => {
     ).toBe(true);
     expect(
       filterGames(games, { ...DEFAULT_FILTERS, tab: "two-player" }, none).every(
-        (g) => g.players.includes(2),
+        (g) => g.players.min <= 2 && g.players.max >= 2,
       ),
     ).toBe(true);
   });

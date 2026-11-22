@@ -1022,6 +1022,98 @@ function Chess() {
   );
 }
 
+/** Speech bubble with a tail pointing down-left or down-right at a head. */
+function bubblePath(x: number, y: number, w: number, tailRight: boolean) {
+  const tx = tailRight ? x + w - 12 : x + 12;
+  const tip = tailRight ? tx + 6 : tx - 6;
+  return `M${x} ${y} L${x + w} ${y} L${x + w} ${y + 20} L${tx + 4} ${y + 20} L${tip} ${y + 28} L${tx - 4} ${y + 20} L${x} ${y + 20} Z`;
+}
+
+function Imposter() {
+  const player = (cx: number, seed: number) => (
+    <>
+      <RPath
+        d={`M${cx - 17} 108 C${cx - 17} 88 ${cx + 17} 88 ${cx + 17} 108`}
+        seed={seed}
+        strokeWidth={2}
+      />
+      <RCircle
+        cx={cx}
+        cy={72}
+        d={26}
+        seed={seed + 1}
+        fill={ink.card}
+        fillStyle="solid"
+      />
+    </>
+  );
+  return (
+    <>
+      {/* Two players who know the word */}
+      {player(26, 200)}
+      <circle cx={21} cy={70} r={1.8} fill={G} />
+      <circle cx={31} cy={70} r={1.8} fill={G} />
+      <RPath d="M20 77 C24 81 28 81 32 77" seed={202} strokeWidth={1.6} />
+      <RPath d={bubblePath(4, 18, 46, false)} seed={203} strokeWidth={1.6} />
+      <Text x={27} y={28} size={14}>
+        pizza
+      </Text>
+
+      {player(134, 210)}
+      <circle cx={129} cy={70} r={1.8} fill={G} />
+      <circle cx={139} cy={70} r={1.8} fill={G} />
+      <RPath d="M128 77 C132 81 136 81 140 77" seed={212} strokeWidth={1.6} />
+      <RPath d={bubblePath(110, 18, 46, true)} seed={213} strokeWidth={1.6} />
+      <Text x={133} y={28} size={14}>
+        pizza
+      </Text>
+
+      {/* The imposter: pink-shaded, shifty eyes, bluffing "???" */}
+      <RPath
+        d="M63 108 C63 86 97 86 97 108"
+        seed={220}
+        strokeWidth={2}
+        fill={crayon.pink}
+        fillStyle="hachure"
+        hachureGap={3}
+      />
+      <RCircle
+        cx={80}
+        cy={68}
+        d={28}
+        seed={221}
+        fill={crayon.pink}
+        fillStyle="hachure"
+        hachureGap={3.5}
+      />
+      <motion.g
+        variants={v({ x: 0 }, { x: [0, -3, 3, 0], transition: loop(0.9, 0.2) })}
+      >
+        <circle cx={76} cy={66} r={2} fill={G} />
+        <circle cx={86} cy={66} r={2} fill={G} />
+      </motion.g>
+      <RPath d="M74 76 L86 75" seed={222} strokeWidth={1.8} />
+      <motion.g
+        variants={v(
+          { rotate: 0 },
+          { rotate: [0, -6, 6, 0], transition: loop(0.6, 0.3) },
+        )}
+        style={{ originX: "80px", originY: "40px" }}
+      >
+        <RPath
+          d={bubblePath(58, 6, 44, false)}
+          seed={223}
+          strokeWidth={1.8}
+          stroke={crayon.pink}
+        />
+        <Text x={80} y={16} size={16} color={crayon.pink}>
+          ???
+        </Text>
+      </motion.g>
+    </>
+  );
+}
+
 const THUMBNAILS: Record<ThumbnailKey, ComponentType> = {
   snake: Snake,
   "tic-tac-toe": TicTacToe,
@@ -1039,6 +1131,7 @@ const THUMBNAILS: Record<ThumbnailKey, ComponentType> = {
   "word-search": WordSearch,
   checkers: Checkers,
   chess: Chess,
+  imposter: Imposter,
 };
 
 export const thumbnailKeys = Object.keys(THUMBNAILS) as ThumbnailKey[];

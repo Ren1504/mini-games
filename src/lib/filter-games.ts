@@ -26,7 +26,8 @@ export const sortOptions: ReadonlyArray<{ id: SortId; label: string }> = [
 
 function matchesTab(game: Game, tab: TabId): boolean {
   if (tab === "all") return true;
-  if (tab === "two-player") return game.players.includes(2);
+  if (tab === "two-player")
+    return game.players.min <= 2 && game.players.max >= 2;
   return game.category === tab;
 }
 

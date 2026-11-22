@@ -28,6 +28,7 @@ export const crayon = {
   green: "var(--color-crayon-green)",
   purple: "var(--color-crayon-purple)",
   orange: "var(--color-crayon-orange)",
+  pink: "var(--color-crayon-pink)",
 } as const;
 
 export type CrayonName = keyof typeof crayon;
