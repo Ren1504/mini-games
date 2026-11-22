@@ -60,8 +60,21 @@ function resolve(options: SketchOptions = {}): Options {
   return out;
 }
 
+/**
+ * rough.js draws curves with Math.sin/cos, whose last bits differ between
+ * Node and the browser's JS engine (e.g. 27.87952533992156 vs
+ * 27.879525339921564). Rounding every coordinate to 1/100px makes the
+ * server and client print identical SVG, so hydration matches.
+ */
+const roundCoords = (d: string) =>
+  d.replace(/-?\d+\.\d+(?:e-?\d+)?/g, (n) =>
+    String(Math.round(Number(n) * 100) / 100),
+  );
+
 const visible = (paths: PathInfo[]) =>
-  paths.filter((p) => !(p.stroke === "none" && (!p.fill || p.fill === "none")));
+  paths
+    .filter((p) => !(p.stroke === "none" && (!p.fill || p.fill === "none")))
+    .map((p) => ({ ...p, d: roundCoords(p.d) }));
 
 const keyOf = (kind: string, args: unknown[], o?: SketchOptions) =>
   `${kind}|${args.join(",")}|${o ? JSON.stringify(o) : ""}`;

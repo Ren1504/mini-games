@@ -2,6 +2,19 @@ import { describe, expect, it } from "vitest";
 import { sketch } from "./rough";
 import { roughSeed, seededRange } from "./seed";
 
+describe("hydration-safe sketch output", () => {
+  it("rounds every coordinate to at most 2 decimals", () => {
+    const shapes = [
+      sketch.circle(1110, 36, 20, { seed: 55, fill: "#E4572E" }),
+      sketch.ellipse(50, 50, 80, 40, { seed: 7 }),
+      sketch.path("M0 0 C10 20 30 40 50 10", { seed: 3 }),
+    ];
+    for (const paths of shapes) {
+      for (const p of paths) expect(p.d).not.toMatch(/\d\.\d{3,}/);
+    }
+  });
+});
+
 describe("seeded randomness", () => {
   it("is deterministic per seed and stays in range", () => {
     expect(seededRange("snake:tilt", -2.5, 2.5)).toBe(

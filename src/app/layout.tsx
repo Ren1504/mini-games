@@ -41,6 +41,7 @@ export default function RootLayout({ children, modal }: LayoutProps<"/">) {
   return (
     <html
       lang="en"
+      data-scroll-behavior="smooth"
       className={`${gochi.variable} ${patrick.variable} ${caveat.variable}`}
     >
       <body className="min-h-dvh overflow-x-hidden">

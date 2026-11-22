@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState, type MouseEvent } from "react";
+import { Suspense, useState, type MouseEvent } from "react";
 import { useSound } from "@/components/fx/Sound";
 import { Annotate } from "@/components/sketch/Annotate";
 import { DoodleIcon } from "@/components/sketch/DoodleIcon";
@@ -116,8 +116,17 @@ function SoundToggle() {
   );
 }
 
-export function Header() {
-  const pathname = usePathname();
+/** Nav that knows the current route (reads the URL, so it sits in Suspense). */
+function RouteAwareNav() {
+  return <MainNav pathname={usePathname()} />;
+}
+
+/**
+ * Main nav. With `pathname` null (the Suspense fallback) nothing is
+ * circled and the links navigate normally; the real nav replaces it
+ * immediately on the client.
+ */
+function MainNav({ pathname }: { pathname: string | null }) {
   const { filters, update } = useHubParams();
   const onHub = pathname === "/";
 
@@ -125,7 +134,8 @@ export function Header() {
     key === "favorites"
       ? onHub && filters.favoritesOnly
       : key === "games"
-        ? (onHub && !filters.favoritesOnly) || pathname.startsWith("/games")
+        ? (onHub && !filters.favoritesOnly) ||
+          Boolean(pathname?.startsWith("/games"))
         : false;
 
   // On the hub, filter in place instead of navigating (keeps animations alive).
@@ -143,6 +153,30 @@ export function Header() {
   };
 
   return (
+    <nav aria-label="Main">
+      <ul className="flex flex-wrap items-center gap-x-3 sm:gap-x-5">
+        {NAV.map((item) => (
+          <li key={item.key}>
+            <NavLink
+              item={item}
+              active={isActive(item.key)}
+              onClick={
+                item.key === "favorites"
+                  ? onFavorites
+                  : item.key === "games"
+                    ? onGames
+                    : undefined
+              }
+            />
+          </li>
+        ))}
+      </ul>
+    </nav>
+  );
+}
+
+export function Header() {
+  return (
     <header className="page-x pt-5 sm:pt-8">
       <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-x-6 gap-y-2">
         <div className="flex items-end gap-2 sm:gap-3">
@@ -150,25 +184,9 @@ export function Header() {
           <Logo />
         </div>
         <div className="flex items-center gap-3 sm:gap-5">
-          <nav aria-label="Main">
-            <ul className="flex flex-wrap items-center gap-x-3 sm:gap-x-5">
-              {NAV.map((item) => (
-                <li key={item.key}>
-                  <NavLink
-                    item={item}
-                    active={isActive(item.key)}
-                    onClick={
-                      item.key === "favorites"
-                        ? onFavorites
-                        : item.key === "games"
-                          ? onGames
-                          : undefined
-                    }
-                  />
-                </li>
-              ))}
-            </ul>
-          </nav>
+          <Suspense fallback={<MainNav pathname={null} />}>
+            <RouteAwareNav />
+          </Suspense>
           <SoundToggle />
         </div>
       </div>
