@@ -46,7 +46,7 @@ export const cardTilt = (slug: string) =>
  */
 export function GameCard({ game, index, columns, ref }: Props) {
   const reduced = useReducedMotionSafe();
-  const { setOrigin } = useModalState();
+  const { open: modalOpen, setOrigin } = useModalState();
   const { rustle } = useSound();
   const own = useRef<HTMLLIElement>(null);
   const inView = useInView(own, { once: true, amount: 0.2 });
@@ -58,9 +58,22 @@ export function GameCard({ game, index, columns, ref }: Props) {
     introFinished() ? "sketch" : "drop",
   );
 
+  // The modal covers the card before it can see the pointer leave, so it
+  // would stay "hovered" (and keep animating) after the modal closes.
+  // Drop hover/focus whenever the modal opens (React's adjust-state-on-
+  // change pattern, no effect needed).
+  const [sawModalOpen, setSawModalOpen] = useState(modalOpen);
+  if (modalOpen !== sawModalOpen) {
+    setSawModalOpen(modalOpen);
+    if (modalOpen) {
+      setHovered(false);
+      setFocused(false);
+    }
+  }
+
   const rotate = cardTilt(game.slug);
   const tape = tapeLook(game.slug);
-  const active = hovered || focused;
+  const active = !modalOpen && (hovered || focused);
   const custom: CardCustom = { rotate, index, columns, mode, reduced, settled };
   const entrance =
     mode === "drop"
@@ -79,7 +92,11 @@ export function GameCard({ game, index, columns, ref }: Props) {
       whileTap="tap"
       onHoverStart={() => setHovered(true)}
       onHoverEnd={() => setHovered(false)}
-      onFocus={() => setFocused(true)}
+      // Only keyboard focus lifts the card; focus restored after closing the
+      // modal (or from a mouse click) does not.
+      onFocus={(e) =>
+        setFocused((e.target as Element).matches(":focus-visible"))
+      }
       onBlur={() => setFocused(false)}
       onAnimationComplete={(label) =>
         label === "shown" && !settled && setSettled(true)

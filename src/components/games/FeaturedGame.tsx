@@ -53,9 +53,17 @@ function TryThisNote() {
 export function FeaturedGame() {
   const game = getFeaturedGame();
   const reduced = useReducedMotionSafe();
-  const { setOrigin } = useModalState();
+  const { open: modalOpen, setOrigin } = useModalState();
   const { rustle } = useSound();
-  const [hovered, setHovered] = useState(false);
+  const [pointerOver, setHovered] = useState(false);
+  // Same as GameCard: the modal hides the pointer leaving, so drop hover
+  // when it opens instead of animating forever.
+  const [sawModalOpen, setSawModalOpen] = useState(modalOpen);
+  if (modalOpen !== sawModalOpen) {
+    setSawModalOpen(modalOpen);
+    if (modalOpen) setHovered(false);
+  }
+  const hovered = pointerOver && !modalOpen;
 
   return (
     <section

@@ -33,14 +33,20 @@ export function GameModal({ slug }: { slug: string }) {
   }, [setOpen]);
 
   // Open: turn the page, lock scroll, move focus in. Close: undo, restore focus.
+  // Next.js keeps recently visited routes alive (hidden) and re-runs this
+  // effect when one is shown again, *keeping its state*. Reopening the same
+  // game therefore revives a modal whose `visible` is still false from the
+  // last close, so every (re)show must reset it, or the page locks with
+  // nothing on screen.
   useEffect(() => {
     const returnTo =
       document.activeElement instanceof HTMLElement
         ? document.activeElement
         : null;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- see above
+    setVisible(true);
     setOpen(true);
     const root = document.documentElement;
-    const prevOverflow = root.style.overflow;
     root.style.overflow = "hidden";
     const t = window.setTimeout(
       () => closeRef.current?.focus({ preventScroll: true }),
@@ -49,7 +55,7 @@ export function GameModal({ slug }: { slug: string }) {
     return () => {
       window.clearTimeout(t);
       setOpen(false);
-      root.style.overflow = prevOverflow;
+      root.style.overflow = "";
       // The page underneath is inert until the context update commits.
       window.setTimeout(() => returnTo?.focus({ preventScroll: true }), 80);
     };
