@@ -20,14 +20,14 @@ const colorOf = (c: (typeof tabs)[number]["color"]) =>
  */
 export function CategoryTabs() {
   const { filters, update } = useHubParams();
-  const { scratch } = useSound();
+  const { rustle } = useSound();
   const reduced = useReducedMotionSafe();
   const refs = useRef<Array<HTMLButtonElement | null>>([]);
 
   const select = (id: TabId) => {
     if (id === filters.tab) return;
     update({ tab: id });
-    scratch();
+    rustle();
   };
 
   const onKeyDown = (e: KeyboardEvent, index: number) => {

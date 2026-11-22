@@ -76,6 +76,18 @@ All colors are CSS variables in `src/app/globals.css`: the light set in
 recolors without being redrawn. A tiny inline script in `layout.tsx` sets
 `data-theme` before first paint, so the page never flashes the wrong theme.
 
+## Sound
+
+Sound effects are muted by default; the speaker button in the header turns
+them on (remembered per browser). Clicks, tabs, favorites and 2048 merges
+play a short slice of a paper rustle (`public/sounds/paper-rustle.mp3`);
+turning sound on plays the whole rustle. The file is only downloaded once
+someone turns sound on. Slice timing and volume live in `sound` in
+`src/lib/motion.ts`.
+
+Sound: "Paper Rustle" by freesound_community, via Pixabay (Pixabay
+Content License).
+
 ## Turn off line boil
 
 The "boiling" outline jitter (logo, mascot, active tab, hovered card) runs at

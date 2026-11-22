@@ -47,7 +47,7 @@ export const cardTilt = (slug: string) =>
 export function GameCard({ game, index, columns, ref }: Props) {
   const reduced = useReducedMotionSafe();
   const { setOrigin } = useModalState();
-  const { scratch } = useSound();
+  const { rustle } = useSound();
   const own = useRef<HTMLLIElement>(null);
   const inView = useInView(own, { once: true, amount: 0.2 });
   const near = useInView(own, { once: true, margin: "300px 0px" });
@@ -118,7 +118,7 @@ export function GameCard({ game, index, columns, ref }: Props) {
                   data-card-link
                   onClick={() => {
                     setOrigin("card");
-                    scratch();
+                    rustle();
                   }}
                   className="outline-none after:absolute after:inset-0 after:content-['']"
                 >

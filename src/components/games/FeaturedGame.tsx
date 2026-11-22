@@ -54,7 +54,7 @@ export function FeaturedGame() {
   const game = getFeaturedGame();
   const reduced = useReducedMotionSafe();
   const { setOrigin } = useModalState();
-  const { scratch } = useSound();
+  const { rustle } = useSound();
   const [hovered, setHovered] = useState(false);
 
   return (
@@ -116,7 +116,7 @@ export function FeaturedGame() {
                     href={`/games/${game.slug}`}
                     onClick={() => {
                       setOrigin("featured");
-                      scratch();
+                      rustle();
                     }}
                     className="outline-none"
                   >

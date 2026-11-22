@@ -157,7 +157,7 @@ export function Game2048() {
   const bestRef = useRef(0);
   const swipe = useRef<{ x: number; y: number } | null>(null);
   const clearTimer = useRef<number | undefined>(undefined);
-  const { scratch } = useSound();
+  const { rustle } = useSound();
 
   const commit = useCallback((next: GameState) => {
     gameRef.current = next;
@@ -208,10 +208,10 @@ export function Game2048() {
       );
       if (result.gained > 0) {
         setGain({ key: result.state.nextId, value: result.gained });
-        scratch();
+        rustle();
       }
     },
-    [commit, scratch],
+    [commit, rustle],
   );
 
   const restart = useCallback(() => {

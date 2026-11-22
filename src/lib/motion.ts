@@ -70,6 +70,17 @@ export const stagger = {
   rowCard: 0.05,
 } as const;
 
+// ── Sound (seconds into public/sounds/paper-rustle.mp3) ─────────────
+export const sound = {
+  /** The recording starts with ~0.3s of silence; always skip it. */
+  leadIn: 0.3,
+  /** Click slices: the softer rustle, then the louder one. */
+  slices: [0.3, 0.72],
+  sliceLength: 0.4,
+  fadeOut: 0.08,
+  volume: 0.8,
+} as const;
+
 // ── Effects ─────────────────────────────────────────────────────────
 export const boil = { intervalMs: 120, frames: 3 } as const;
 export const typewriter = { charMs: 60, startDelayMs: 900 } as const;

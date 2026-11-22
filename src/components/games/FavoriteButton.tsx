@@ -29,7 +29,7 @@ export function FavoriteButton({
   size?: number;
 }) {
   const { favorites, toggle } = useFavorites();
-  const { scratch } = useSound();
+  const { rustle } = useSound();
   const reduced = useReducedMotionSafe();
   const [scope, animate] = useAnimate<HTMLSpanElement>();
   const [bursts, setBursts] = useState<number[]>([]);
@@ -46,7 +46,7 @@ export function FavoriteButton({
   const onClick = (e: MouseEvent) => {
     const becomingOn = !on;
     toggle(slug);
-    scratch();
+    rustle();
     if (reduced || !scope.current) return;
     void animate(
       scope.current,

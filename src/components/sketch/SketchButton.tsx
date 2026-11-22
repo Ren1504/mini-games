@@ -43,11 +43,11 @@ export function SketchButton({
   "aria-label": ariaLabel,
 }: Props) {
   const { trigger, node } = useStarBurst();
-  const { scratch } = useSound();
+  const { rustle } = useSound();
 
   const handleClick = (e: MouseEvent<HTMLElement>) => {
     trigger(e);
-    scratch();
+    rustle();
     onClick?.(e);
   };
 

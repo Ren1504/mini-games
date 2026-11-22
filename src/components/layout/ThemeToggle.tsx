@@ -24,7 +24,7 @@ const ICON =
 export function ThemeToggle() {
   const { theme, setTheme } = useTheme();
   const reduced = useReducedMotionSafe();
-  const { scratch } = useSound();
+  const { rustle } = useSound();
   const dark = theme === "dark";
 
   useEffect(() => followSystemTheme(), []);
@@ -36,7 +36,7 @@ export function ThemeToggle() {
       { x: box.left + box.width / 2, y: box.top + box.height / 2 },
       reduced,
     );
-    scratch();
+    rustle();
   };
 
   return (

@@ -4,21 +4,29 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useRef,
   useSyncExternalStore,
   type ReactNode,
 } from "react";
+import { sound } from "@/lib/motion";
 
 const KEY = "doodle-arcade:sound";
 const EVENT = "doodle-arcade:sound-change";
+const SRC = "/sounds/paper-rustle.mp3";
 
-type SoundApi = { enabled: boolean; toggle: () => void; scratch: () => void };
+type SoundApi = {
+  enabled: boolean;
+  toggle: () => void;
+  /** Short paper rustle for clicks, taps and merges (no-op when muted). */
+  rustle: () => void;
+};
 
 const SoundContext = createContext<SoundApi>({
   enabled: false,
   toggle: () => {},
-  scratch: () => {},
+  rustle: () => {},
 });
 
 function readEnabled(): boolean {
@@ -35,46 +43,88 @@ function subscribe(onChange: () => void) {
 }
 
 /**
- * Pencil-scratch SFX synthesised with Web Audio (filtered noise bursts),
- * so there are no audio files to load. Muted by default; the choice is
- * remembered per browser.
+ * Paper-rustle sound effects (public/sounds/paper-rustle.mp3), played with
+ * Web Audio. Muted by default and remembered per browser. The file is only
+ * downloaded once a visitor turns sound on. Clicks play a short slice that
+ * skips the recording's silent lead-in; a new rustle fades out the previous
+ * one, so rapid clicking never piles up.
  */
 export function SoundProvider({ children }: { children: ReactNode }) {
   const enabled = useSyncExternalStore(subscribe, readEnabled, () => false);
   const ctxRef = useRef<AudioContext | null>(null);
+  const bufferRef = useRef<Promise<AudioBuffer | null> | null>(null);
+  const currentRef = useRef<{
+    src: AudioBufferSourceNode;
+    gain: GainNode;
+  } | null>(null);
+  const sliceRef = useRef(0);
 
-  const play = useCallback(() => {
-    const ctx = (ctxRef.current ??= new AudioContext());
-    if (ctx.state === "suspended") void ctx.resume();
-    const strokes = 3;
-    for (let s = 0; s < strokes; s++) {
-      const start = ctx.currentTime + s * 0.07;
-      const len = 0.06;
-      const buffer = ctx.createBuffer(
-        1,
-        Math.ceil(ctx.sampleRate * len),
-        ctx.sampleRate,
-      );
-      const data = buffer.getChannelData(0);
-      for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
+  const context = useCallback(
+    () => (ctxRef.current ??= new AudioContext()),
+    [],
+  );
+
+  /** Fetch + decode once; later calls reuse the same promise. */
+  const load = useCallback(() => {
+    bufferRef.current ??= fetch(SRC)
+      .then((r) =>
+        r.ok ? r.arrayBuffer() : Promise.reject(new Error(String(r.status))),
+      )
+      .then((data) => context().decodeAudioData(data))
+      .catch(() => {
+        bufferRef.current = null; // allow a retry on the next click
+        return null;
+      });
+    return bufferRef.current;
+  }, [context]);
+
+  // Visitors who already have sound on get the file preloaded.
+  useEffect(() => {
+    if (enabled) void load();
+  }, [enabled, load]);
+
+  const play = useCallback(
+    async (full: boolean) => {
+      const buffer = await load();
+      if (!buffer) return;
+      const ctx = context();
+      if (ctx.state === "suspended") await ctx.resume();
+      const now = ctx.currentTime;
+
+      // Fade out whatever is still rustling.
+      const prev = currentRef.current;
+      if (prev) {
+        prev.gain.gain.cancelScheduledValues(now);
+        prev.gain.gain.setTargetAtTime(0, now, 0.015);
+        prev.src.stop(now + 0.08);
+      }
+
+      // Alternate between the softer and the louder rustle for variety.
+      const offset = full
+        ? sound.leadIn
+        : sound.slices[sliceRef.current++ % sound.slices.length];
+      const length = full ? buffer.duration - sound.leadIn : sound.sliceLength;
       const src = ctx.createBufferSource();
       src.buffer = buffer;
-      const band = ctx.createBiquadFilter();
-      band.type = "bandpass";
-      band.frequency.value = 2600 + s * 500;
-      band.Q.value = 0.9;
       const gain = ctx.createGain();
-      gain.gain.setValueAtTime(0.0001, start);
-      gain.gain.exponentialRampToValueAtTime(0.18, start + 0.012);
-      gain.gain.exponentialRampToValueAtTime(0.0001, start + len);
-      src.connect(band).connect(gain).connect(ctx.destination);
-      src.start(start);
-      src.stop(start + len);
-    }
-  }, []);
+      gain.gain.setValueAtTime(sound.volume, now);
+      gain.gain.setTargetAtTime(
+        0,
+        now + length - sound.fadeOut,
+        sound.fadeOut / 3,
+      );
+      src.connect(gain).connect(ctx.destination);
+      src.start(now, offset, length);
+      src.onended = () => {
+        if (currentRef.current?.src === src) currentRef.current = null;
+      };
+      currentRef.current = { src, gain };
+    },
+    [context, load],
+  );
 
-  const scratch = useCallback(() => {
-    if (readEnabled()) play();
+  const rustle = useCallback(() => {
+    if (readEnabled()) void play(false);
   }, [play]);
 
   const toggle = useCallback(() => {
@@ -85,12 +135,12 @@ export function SoundProvider({ children }: { children: ReactNode }) {
       // Ignore: the toggle still works for this page view via the event.
     }
     window.dispatchEvent(new Event(EVENT));
-    if (next) play();
+    if (next) void play(true);
   }, [play]);
 
   const api = useMemo(
-    () => ({ enabled, toggle, scratch }),
-    [enabled, toggle, scratch],
+    () => ({ enabled, toggle, rustle }),
+    [enabled, toggle, rustle],
   );
   return <SoundContext.Provider value={api}>{children}</SoundContext.Provider>;
 }
