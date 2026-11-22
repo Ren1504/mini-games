@@ -44,6 +44,8 @@ export const duration = {
   /** Replacement fade when prefers-reduced-motion is on. */
   reduced: 0.15,
   sunTurn: 60,
+  /** 2048: how long a tile takes to slide to its new cell. */
+  tileSlide: 0.12,
   /** Circular wipe when switching light ↔ dark. */
   themeWipe: 0.55,
 } as const;

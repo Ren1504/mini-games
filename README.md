@@ -32,6 +32,19 @@ npm run dev          # http://localhost:3000
    `/games/<slug>/play` placeholder are all generated from the data. Tests check
    that slugs are unique and every game has its own thumbnail.
 
+### Make a game playable
+
+Every game's `/games/<slug>/play` page shows "Game coming soon!" until it
+has a real implementation. To ship one:
+
+1. Build it under `src/games/<slug>/`. Keep the rules in a plain
+   `logic.ts` with tests (see `src/games/2048/`), and the UI in a client
+   component.
+2. Register the component in `src/games/playable.ts`.
+
+Playable so far: **2048** (arrow keys / WASD or swipe; the best score
+and the current game are saved in the browser, so a reload resumes play).
+
 Set `isFeatured: true` on exactly one game to put it on the big taped card.
 
 ## Tweak the motion

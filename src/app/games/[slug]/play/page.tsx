@@ -6,6 +6,7 @@ import { ComingSoon } from "@/components/games/ComingSoon";
 import { PageFallback } from "@/components/paper/PageFallback";
 import { TornEdge } from "@/components/paper/TornEdge";
 import { games, getGame } from "@/data/games";
+import { playableGames } from "@/games/playable";
 
 export function generateStaticParams() {
   return games.map((g) => ({ slug: g.slug }));
@@ -23,12 +24,17 @@ async function Play({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const game = getGame(slug);
   if (!game) notFound();
+  const Game = playableGames[slug];
   return (
     <TornEdge
       seed={`${slug}-play`}
-      paperClassName="px-6 pt-14 pb-10 text-center sm:px-12"
+      paperClassName={
+        Game
+          ? "px-4 pt-12 pb-10 sm:px-10"
+          : "px-6 pt-14 pb-10 text-center sm:px-12"
+      }
     >
-      <ComingSoon slug={slug} title={game.title} />
+      {Game ? <Game /> : <ComingSoon slug={slug} title={game.title} />}
       <div className="mt-8 flex flex-wrap justify-center gap-x-8 gap-y-3 font-hand text-xl">
         {/* Plain <a>: a full load shows the detail page, not the modal over this one. */}
         <a

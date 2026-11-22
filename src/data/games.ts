@@ -222,7 +222,7 @@ export const games: readonly Game[] = [
       "Two tiles with the same number merge into one.",
       "Make a 2048 tile before the board fills up.",
     ],
-    controls: [arrows],
+    controls: [arrows, { keys: ["Swipe"], action: "Move on phones" }],
     thumbnail: "2048",
     isNew: false,
     isFeatured: false,
