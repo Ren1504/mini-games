@@ -749,65 +749,121 @@ function Dots() {
 }
 
 function Sudoku() {
-  const digits: Array<[number, number, string]> = [
-    [0, 0, "5"],
-    [1, 0, "3"],
-    [4, 0, "7"],
-    [0, 1, "6"],
-    [3, 1, "1"],
-    [5, 1, "9"],
-    [1, 2, "9"],
-    [2, 2, "8"],
-    [5, 2, "6"],
+  // 6×6 mini Sudoku: six boxes of 2 rows × 3 columns on an even grid.
+  const X = 32;
+  const Y = 7;
+  const C = 16; // cell size → 96×96 board
+  const N = 6;
+  // Givens from a valid solution:
+  //   1 2 3|4 5 6 · 4 5 6|1 2 3 · 2 3 1|5 6 4
+  //   5 6 4|2 3 1 · 3 1 2|6 4 5 · 6 4 5|3 1 2
+  const givens: Array<[row: number, col: number, digit: number]> = [
+    [0, 0, 1],
+    [0, 3, 4],
+    [0, 5, 6],
+    [1, 1, 5],
+    [1, 4, 2],
+    [2, 0, 2],
+    [2, 2, 1],
+    [2, 5, 4],
+    [3, 1, 6],
+    [3, 3, 2],
+    [4, 2, 2],
+    [4, 4, 4],
+    [5, 0, 6],
+    [5, 3, 3],
+    [5, 5, 2],
   ];
+  const at = (i: number) => i * C;
   return (
     <>
-      <RRect x={26} y={10} w={108} h={90} seed={120} strokeWidth={2.6} />
-      <RLine x1={62} y1={10} x2={62} y2={100} seed={121} strokeWidth={2.2} />
-      <RLine x1={98} y1={10} x2={98} y2={100} seed={122} strokeWidth={2.2} />
-      {[1, 2].map((i) => (
-        <RLine
-          key={i}
-          x1={26}
-          y1={10 + i * 30}
-          x2={134}
-          y2={10 + i * 30}
-          seed={123 + i}
-          strokeWidth={1.2}
-          stroke={ink.sketch}
-        />
-      ))}
+      {/* Thin cell lines everywhere except the box borders */}
       {[1, 2, 4, 5].map((i) => (
         <RLine
-          key={i}
-          x1={26 + i * 18}
-          y1={10}
-          x2={26 + i * 18}
-          y2={100}
+          key={`v${i}`}
+          x1={X + at(i)}
+          y1={Y}
+          x2={X + at(i)}
+          y2={Y + at(N)}
           seed={126 + i}
           strokeWidth={1}
           stroke={ink.sketch}
+          roughness={0.6}
         />
       ))}
-      {digits.map(([cx, cy, n], i) => (
-        <Text key={i} x={35 + cx * 18} y={25 + cy * 30} size={17}>
-          {n}
+      {[1, 3, 5].map((i) => (
+        <RLine
+          key={`h${i}`}
+          x1={X}
+          y1={Y + at(i)}
+          x2={X + at(N)}
+          y2={Y + at(i)}
+          seed={133 + i}
+          strokeWidth={1}
+          stroke={ink.sketch}
+          roughness={0.6}
+        />
+      ))}
+      {/* Thick box borders: after column 3, after rows 2 and 4 */}
+      <RLine
+        x1={X + at(3)}
+        y1={Y}
+        x2={X + at(3)}
+        y2={Y + at(N)}
+        seed={121}
+        strokeWidth={2.2}
+        roughness={0.8}
+      />
+      {[2, 4].map((i) => (
+        <RLine
+          key={`b${i}`}
+          x1={X}
+          y1={Y + at(i)}
+          x2={X + at(N)}
+          y2={Y + at(i)}
+          seed={140 + i}
+          strokeWidth={2.2}
+          roughness={0.8}
+        />
+      ))}
+      <RRect
+        x={X}
+        y={Y}
+        w={at(N)}
+        h={at(N)}
+        seed={120}
+        strokeWidth={2.6}
+        roughness={0.9}
+      />
+      {givens.map(([r, c, d]) => (
+        <Text
+          key={`${r}-${c}`}
+          x={X + at(c) + C / 2}
+          y={Y + at(r) + C / 2 + 0.5}
+          size={12}
+        >
+          {d}
         </Text>
       ))}
+      {/* Hover: the right answer gets pencilled into an empty cell */}
       <motion.g
         variants={{
-          shown: { opacity: 0, y: 4, transition: { duration: 0.15 } },
+          shown: { opacity: 0, y: 3, transition: { duration: 0.15 } },
           hover: { opacity: 1, y: 0, transition: spring },
         }}
       >
-        <Text x={35 + 3 * 18} y={85} size={19} color={crayon.purple}>
-          4
+        <Text
+          x={X + at(4) + C / 2}
+          y={Y + at(3) + C / 2 + 0.5}
+          size={13}
+          color={crayon.purple}
+        >
+          3
         </Text>
       </motion.g>
     </>
   );
 }
-
 function ConnectFour() {
   const filled: Record<string, string> = {
     "0-3": crayon.red,
