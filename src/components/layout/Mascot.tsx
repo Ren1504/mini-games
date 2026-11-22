@@ -67,7 +67,7 @@ export function Mascot() {
       aria-hidden="true"
       focusable="false"
       viewBox="0 0 70 90"
-      className="h-14 w-10 shrink-0 overflow-visible sm:h-20 sm:w-16"
+      className="h-14 w-10 shrink-0 overflow-visible sm:h-20 sm:w-16 short:h-12 short:w-9"
       initial={reduced ? { opacity: 0 } : { opacity: 0, y: -12, rotate: -12 }}
       animate={{ opacity: 1, y: 0, rotate: -6 }}
       transition={{ ...spring, delay: introDelay(timeline.logo) }}

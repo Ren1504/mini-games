@@ -33,6 +33,10 @@
   }
 }
 
+/* Phones held sideways: wide enough for desktop breakpoints but short,
+   so big type would push every game below the first screen. */
+@custom-variant short (@media (max-height: 520px) and (orientation: landscape));
+
 @theme inline {
   --font-hand: var(--font-gochi), "Comic Sans MS", cursive;
   --font-body: var(--font-patrick), "Comic Sans MS", cursive;

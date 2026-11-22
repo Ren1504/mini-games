@@ -29,7 +29,7 @@ function Logo() {
           text="Doodle Arcade"
           seed="logo"
           popInAt={timeline.logo}
-          className="block font-hand text-[clamp(1.5rem,7.2vw,2.1rem)] leading-none sm:text-5xl"
+          className="block font-hand text-[clamp(1.25rem,6.6vw,2.1rem)] leading-none sm:text-5xl short:text-[2.1rem]"
         />
       </span>
       <Scribble
@@ -71,7 +71,7 @@ function NavLink({
       onPointerLeave={() => setHot(false)}
       onFocus={() => setHot(true)}
       onBlur={() => setHot(false)}
-      className="inline-block px-1 py-1 font-hand text-xl sm:text-2xl"
+      className="inline-flex min-h-11 items-center px-1 font-hand text-xl sm:text-2xl short:text-xl"
     >
       <Annotate
         type="circle"
@@ -178,7 +178,7 @@ function MainNav({ pathname }: { pathname: string | null }) {
 
 export function Header() {
   return (
-    <header className="page-x pt-5 sm:pt-8">
+    <header className="page-x pt-5 sm:pt-8 short:pt-3">
       {/* Phones: logo + toggles on row 1 (toggles top-right), nav on row 2.
           Wider: logo … nav, sound, theme in one row. */}
       <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-x-2 gap-y-2 sm:gap-x-5">

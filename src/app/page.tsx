@@ -12,7 +12,7 @@ export default function Home() {
     <main id="main" className="relative flex-1">
       <MarginDoodles />
       <Hero />
-      <div className="page-x mt-14 sm:mt-16">
+      <div className="page-x mt-14 sm:mt-16 short:mt-8">
         <FeaturedGame />
       </div>
       <section

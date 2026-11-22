@@ -120,7 +120,7 @@ export function GameModal({ slug }: { slug: string }) {
             >
               <TornEdge
                 seed={slug}
-                paperClassName="px-5 pt-14 pb-8 sm:px-10 sm:pt-16 sm:pb-10"
+                paperClassName="px-5 pt-20 pb-8 sm:px-10 sm:pt-16 sm:pb-10"
               >
                 <button
                   ref={closeRef}

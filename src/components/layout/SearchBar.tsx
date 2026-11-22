@@ -6,14 +6,18 @@ import { HandwrittenTypewriter } from "@/components/fx/HandwrittenTypewriter";
 import { DoodleIcon } from "@/components/sketch/DoodleIcon";
 import { SketchBox } from "@/components/sketch/SketchBox";
 import { useHubParams } from "@/hooks/useHubParams";
+import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { useReducedMotionSafe } from "@/hooks/useReducedMotionSafe";
 import { duration } from "@/lib/motion";
 
 const PLACEHOLDER = "search for snake, chess, memory...";
+const PLACEHOLDER_SHORT = "try snake, chess...";
 
 /** Wobbly hand-drawn search box. Every keystroke nudges it a little. */
 export function SearchBar() {
   const { filters, update } = useHubParams();
+  // Phones get a shorter typed hint so it fits inside the box.
+  const wide = useMediaQuery("(min-width: 480px)");
   const reduced = useReducedMotionSafe();
   const [scope, animate] = useAnimate<HTMLDivElement>();
   const flip = useRef(1);
@@ -67,8 +71,10 @@ export function SearchBar() {
               className="w-full bg-transparent py-3 font-body text-xl text-graphite outline-none"
             />
             {!filters.q && (
-              <span className="pointer-events-none absolute inset-y-0 left-0 flex items-center font-body text-xl text-sketch">
-                <HandwrittenTypewriter text={PLACEHOLDER} />
+              <span className="pointer-events-none absolute inset-0 flex items-center overflow-hidden [mask-image:linear-gradient(to_right,black_85%,transparent)] font-body text-xl whitespace-nowrap text-sketch">
+                <HandwrittenTypewriter
+                  text={wide ? PLACEHOLDER : PLACEHOLDER_SHORT}
+                />
               </span>
             )}
           </div>

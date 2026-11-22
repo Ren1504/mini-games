@@ -11,7 +11,7 @@ function NewThisWeekArrow() {
   return (
     <div
       aria-hidden="true"
-      className="pointer-events-none relative hidden w-56 shrink-0 md:block"
+      className="pointer-events-none relative hidden w-56 shrink-0 md:block short:hidden"
     >
       <p className="ml-10 -rotate-6 font-note text-3xl text-graphite">
         new this week!
@@ -48,12 +48,15 @@ function NewThisWeekArrow() {
 
 export function Hero() {
   return (
-    <section aria-labelledby="hero-title" className="page-x pt-10 sm:pt-14">
-      <div className="mx-auto flex max-w-7xl flex-col gap-8 md:flex-row md:items-end md:justify-between">
-        <div className="flex max-w-3xl flex-col gap-6">
+    <section
+      aria-labelledby="hero-title"
+      className="page-x pt-10 sm:pt-14 short:pt-4"
+    >
+      <div className="mx-auto flex max-w-7xl flex-col gap-8 md:flex-row md:items-end md:justify-between short:gap-4">
+        <div className="flex max-w-3xl flex-col gap-6 short:gap-3">
           <h1
             id="hero-title"
-            className="font-hand text-[2.6rem] leading-[1.15] sm:text-6xl lg:text-7xl"
+            className="font-hand text-[2.6rem] leading-[1.15] sm:text-6xl lg:text-7xl short:text-[2.6rem]"
           >
             <HandLettered text="Pick a game &" seed="hero-1" />{" "}
             <HandLettered text="let's" seed="hero-2" />{" "}
@@ -65,7 +68,7 @@ export function Hero() {
             </SketchCircle>
             <HandLettered text="!" seed="hero-4" />
           </h1>
-          <p className="max-w-xl font-note text-2xl leading-snug text-sketch sm:text-[1.7rem]">
+          <p className="max-w-xl font-note text-2xl leading-snug text-sketch sm:text-[1.7rem] short:text-xl">
             A notebook full of tiny games. Flip the pages, pick one, and play
             right here.
           </p>
