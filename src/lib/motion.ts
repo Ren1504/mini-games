@@ -40,7 +40,6 @@ export const duration = {
   burst: 0.4,
   heart: 0.3,
   wobble: 0.12,
-  pageTurn: 0.45,
   /** Replacement fade when prefers-reduced-motion is on. */
   reduced: 0.15,
   sunTurn: 60,
@@ -93,11 +92,6 @@ export const press = { scale: 0.96, y: 2 } as const;
 export const cardDrop = { y: -30, tilt: 10, scale: 1.05 } as const;
 /** Tape lands this long after its card starts falling (fall ≈ 0.3s + 120ms). */
 export const tapeAfterCard = 0.42;
-export const pageTurn = {
-  rotateY: -8,
-  perspective: 1200,
-  scale: 0.98,
-} as const;
 export const letterPop = { scale: 0.6, rotate: 8 } as const;
 
 // ── Intro clock ─────────────────────────────────────────────────────

@@ -98,17 +98,9 @@ export function GameModal({ slug }: { slug: string }) {
           className="fixed inset-0 z-50 overflow-y-auto"
           exit={{ opacity: 1 }}
         >
-          <motion.div
-            aria-hidden="true"
-            className="fixed inset-0 bg-black/45"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{
-              duration: reduced ? duration.reduced : duration.pageTurn,
-            }}
-            onClick={close}
-          />
+          {/* Invisible click-catcher: clicking anywhere outside the
+              popup closes it. The page behind is left untouched. */}
+          <div aria-hidden="true" className="fixed inset-0" onClick={close} />
           <div className="pointer-events-none relative flex min-h-full items-start justify-center px-3 py-6 sm:items-center sm:px-8 sm:py-10">
             <motion.div
               ref={dialogRef}

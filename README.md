@@ -57,12 +57,12 @@ Every spring, ease, duration and load-sequence time lives in
 
 - `spring` / `softSpring` / `strokeEase`: the feel of everything.
 - `timeline`: when each part of the page-load sequence starts.
-- `stagger`, `cardDrop`, `lift`, `press`, `pageTurn`: card and page moves.
+- `stagger`, `cardDrop`, `lift`, `press`: card moves.
 - `cardVariants`: hidden → shown → hover → tap → erased for game cards.
 
 With `prefers-reduced-motion`, `<MotionConfig reducedMotion="user">` turns off
 transform and layout animation, and components fall back to 150ms fades.
-Line boil, parallax, star bursts and the page turn are skipped.
+Line boil, parallax and star bursts are skipped.
 
 ## Light & dark (notebook ↔ chalkboard)
 
