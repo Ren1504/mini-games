@@ -40,7 +40,10 @@ has a real implementation. To ship one:
 1. Build it under `src/games/<slug>/`. Keep the rules in a plain
    `logic.ts` with tests (see `src/games/2048/`), and the UI in a client
    component.
-2. Register the component in `src/games/playable.ts`.
+2. Add its slug to `src/games/playable.ts` and a lazy loader to
+   `src/games/GameLoader.tsx`. Each game becomes its own chunk, downloaded
+   only on that game's play page, so adding games never slows the hub or
+   other games. A test checks the two lists match.
 
 Playable so far: **2048** (arrow keys / WASD or swipe; the best score
 and the current game are saved in the browser, so a reload resumes play).

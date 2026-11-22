@@ -1,11 +1,19 @@
-import type { ComponentType } from "react";
-import { Game2048 } from "./2048/Game2048";
-
 /**
- * Games that are actually playable, by slug. /games/<slug>/play renders
- * the component here, and every other game shows "coming soon".
- * To ship a new game: build it under src/games/<slug>/ and add it below.
+ * Slugs of games that are actually playable. /games/<slug>/play renders
+ * the real game for these and "coming soon" for everything else.
+ *
+ * To ship a new game:
+ *   1. Build it under src/games/<slug>/.
+ *   2. Add its slug here.
+ *   3. Add a lazy loader for it in src/games/GameLoader.tsx.
+ * A test fails if 2 and 3 get out of sync.
+ *
+ * This file stays free of component imports on purpose: the play page
+ * (a Server Component) reads it, and each game's code is loaded only on
+ * that game's own play page (see GameLoader.tsx).
  */
-export const playableGames: Partial<Record<string, ComponentType>> = {
-  "2048": Game2048,
-};
+export const playableSlugs: ReadonlySet<string> = new Set(["2048"]);
+
+export function isPlayable(slug: string): boolean {
+  return playableSlugs.has(slug);
+}
