@@ -46,6 +46,8 @@ export type Game = {
   plays: number;
   /** ISO date, used by the "Newest" sort. */
   addedAt: string;
+  /** Extra labels shown as small badges on the card (e.g. "Multiplayer"). */
+  tags?: readonly string[];
 };
 
 export type Tab = { id: TabId; label: string; color: CrayonName | "graphite" };
@@ -438,22 +440,23 @@ export const games: readonly Game[] = [
   },
   {
     id: "g17",
-    slug: "imposter-word-game",
-    title: "Imposter Word Game",
+    slug: "imposter",
+    title: "Imposter",
     category: "party",
     difficulty: 2,
-    players: { min: 3, max: 12 },
-    avgMinutes: 10,
+    players: { min: 3, max: 10 },
+    avgMinutes: 6,
     description:
       "Everyone gets the same secret word except one imposter, who has to bluff and blend in.",
     howToPlay: [
-      "Everyone secretly sees the same word, except one player: the imposter.",
-      "Take turns saying one clue about the word, without giving it away.",
-      "The imposter doesn't know the word, so they bluff to blend in.",
-      "Vote for who you think the imposter is. Catch them to win, or they win by staying hidden!",
+      "One player hosts a room and shares the code; friends join on their phones.",
+      "Everyone secretly sees the same word, except the imposter, who only gets a vague clue.",
+      "Take turns typing one hint about the word, without giving it away.",
+      "Talk it over, then vote. Catch the imposter to win, or they win by staying hidden!",
     ],
     controls: [
-      { keys: ["Tap"], action: "See your secret word" },
+      { keys: ["Hold"], action: "Peek at your secret card" },
+      { keys: ["Type"], action: "Give your hint" },
       { keys: ["Tap"], action: "Vote for the imposter" },
     ],
     thumbnail: "imposter",
@@ -461,6 +464,7 @@ export const games: readonly Game[] = [
     isFeatured: false,
     plays: 0,
     addedAt: "2026-11-23",
+    tags: ["Multiplayer"],
   },
 ];
 

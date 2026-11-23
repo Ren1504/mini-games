@@ -24,6 +24,10 @@ type Props = {
   type?: "button" | "submit";
   className?: string;
   "aria-label"?: string;
+  /** Toggle buttons (e.g. "Skip to voting"). */
+  "aria-pressed"?: boolean;
+  /** Buttons only: greyed out, no hover/press, no click. */
+  disabled?: boolean;
 };
 
 /**
@@ -41,11 +45,14 @@ export function SketchButton({
   type = "button",
   className,
   "aria-label": ariaLabel,
+  "aria-pressed": ariaPressed,
+  disabled = false,
 }: Props) {
   const { trigger, node } = useStarBurst();
   const { rustle } = useSound();
 
   const handleClick = (e: MouseEvent<HTMLElement>) => {
+    if (disabled) return;
     trigger(e);
     rustle();
     onClick?.(e);
@@ -72,14 +79,19 @@ export function SketchButton({
   );
 
   const shared = {
-    className: cn("relative inline-flex select-none", className),
+    className: cn(
+      "relative inline-flex select-none",
+      disabled && "cursor-not-allowed opacity-45",
+      className,
+    ),
     variants: buttonPress,
     initial: "rest" as const,
     animate: "rest" as const,
-    whileHover: "hover" as const,
-    whileTap: "tap" as const,
+    whileHover: disabled ? undefined : ("hover" as const),
+    whileTap: disabled ? undefined : ("tap" as const),
     onClick: handleClick,
     "aria-label": ariaLabel,
+    "aria-pressed": ariaPressed,
   };
 
   if (href) {
@@ -91,7 +103,7 @@ export function SketchButton({
     );
   }
   return (
-    <motion.button type={type} {...shared}>
+    <motion.button type={type} disabled={disabled} {...shared}>
       {inner}
       {node}
     </motion.button>

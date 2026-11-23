@@ -24,6 +24,10 @@ export const gameLoaders: Record<string, ComponentType> = {
   "2048": dynamic(() => import("./2048/Game2048").then((m) => m.Game2048), {
     loading: Loading,
   }),
+  imposter: dynamic(
+    () => import("./imposter/ImposterHostJoin").then((m) => m.ImposterHostJoin),
+    { loading: Loading },
+  ),
 };
 
 export function GameLoader({ slug }: { slug: string }) {

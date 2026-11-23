@@ -24,7 +24,13 @@ import {
 import { ink } from "@/lib/palette";
 import { seededRange } from "@/lib/seed";
 import { FavoriteButton } from "./FavoriteButton";
-import { CategoryTag, DifficultyStars, Minutes, Players } from "./GameMeta";
+import {
+  CategoryTag,
+  DifficultyStars,
+  Minutes,
+  Players,
+  TagBadges,
+} from "./GameMeta";
 import { GameThumbnail } from "./Thumbnails";
 
 type Props = {
@@ -150,6 +156,7 @@ export function GameCard({ game, index, columns, ref }: Props) {
             </div>
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
               <CategoryTag category={game.category} seed={game.slug} />
+              <TagBadges tags={game.tags} seed={game.slug} />
               <DifficultyStars level={game.difficulty} />
               <Players players={game.players} />
               <Minutes minutes={game.avgMinutes} />

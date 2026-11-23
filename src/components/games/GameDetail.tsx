@@ -11,7 +11,13 @@ import { categoryColor, getGame } from "@/data/games";
 import { formatPlays } from "@/lib/filter-games";
 import { crayon, ink } from "@/lib/palette";
 import { FavoriteButton } from "./FavoriteButton";
-import { CategoryTag, DifficultyStars, Minutes, Players } from "./GameMeta";
+import {
+  CategoryTag,
+  DifficultyStars,
+  Minutes,
+  Players,
+  TagBadges,
+} from "./GameMeta";
 import { GameThumbnail } from "./Thumbnails";
 
 /** A keyboard key drawn as a little wobbly box. */
@@ -79,6 +85,7 @@ export function GameDetail({
         </SketchBox>
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
           <CategoryTag category={game.category} seed={`detail-${game.slug}`} />
+          <TagBadges tags={game.tags} seed={`detail-${game.slug}`} />
           <DifficultyStars level={game.difficulty} />
           <Players players={game.players} />
           <Minutes minutes={game.avgMinutes} />

@@ -37,6 +37,34 @@ export function CategoryTag({
   );
 }
 
+/** Extra labels (e.g. "Multiplayer") as small pencil-outlined tags. */
+export function TagBadges({
+  tags,
+  seed,
+}: {
+  tags?: readonly string[];
+  seed: string;
+}) {
+  if (!tags?.length) return null;
+  return (
+    <>
+      {tags.map((tag) => (
+        <SketchBox
+          key={tag}
+          as="span"
+          seed={`badge-${seed}-${tag}`}
+          stroke={ink.sketch}
+          strokeWidth={1.3}
+          inset={1}
+          className="inline-block px-2 py-0.5 text-lg leading-tight text-graphite"
+        >
+          {tag}
+        </SketchBox>
+      ))}
+    </>
+  );
+}
+
 export function DifficultyStars({ level }: { level: Difficulty }) {
   return (
     <span

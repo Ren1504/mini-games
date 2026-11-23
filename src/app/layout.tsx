@@ -6,6 +6,7 @@ import { Footer } from "@/components/layout/Footer";
 import { Header } from "@/components/layout/Header";
 import { NotebookPage } from "@/components/layout/NotebookPage";
 import { Providers } from "@/components/layout/Providers";
+import { SkipLink } from "@/components/layout/SkipLink";
 import { SketchFilters } from "@/components/sketch/SketchFilters";
 import { themeInitScript } from "@/hooks/useTheme";
 import "./globals.css";
@@ -58,12 +59,7 @@ export default function RootLayout({ children, modal }: LayoutProps<"/">) {
         <SketchFilters />
         <Providers>
           <NotebookPage>
-            <a
-              href="#main"
-              className="sr-only z-50 font-hand text-xl focus:not-sr-only focus:absolute focus:top-3 focus:left-[calc(var(--margin-x)+1rem)] focus:bg-sticky focus:px-4 focus:py-2 focus:text-[#2b2b2b]"
-            >
-              Skip to content
-            </a>
+            <SkipLink />
             <Header />
             {children}
             <Footer />

@@ -12,7 +12,7 @@
  * (a Server Component) reads it, and each game's code is loaded only on
  * that game's own play page (see GameLoader.tsx).
  */
-export const playableSlugs: ReadonlySet<string> = new Set(["2048"]);
+export const playableSlugs: ReadonlySet<string> = new Set(["2048", "imposter"]);
 
 export function isPlayable(slug: string): boolean {
   return playableSlugs.has(slug);
