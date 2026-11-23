@@ -75,13 +75,15 @@ export const clientMessageSchema = z.discriminatedUnion("type", [
    * Take a seat. "host" creates the room (only if nobody hosted it yet);
    * "join" requires an existing hosted room. With a token, the server
    * restores that seat instead (reconnect / refresh / second tab).
+   * `avatar` is only a preference: if it's free you get it, otherwise the
+   * server assigns a free doodle (change it in the lobby with SET_AVATAR).
    */
   z
     .object({
       type: z.literal("JOIN"),
       mode: z.enum(["host", "join"]),
       name: nameSchema,
-      avatar: avatarSchema,
+      avatar: avatarSchema.optional(),
       token: tokenSchema.optional(),
       maxPlayers: z
         .number()
@@ -102,6 +104,8 @@ export const clientMessageSchema = z.discriminatedUnion("type", [
         .max(LIMITS.MAX_PLAYERS),
     })
     .strict(),
+  /** Pick a different (free) doodle. Lobby only. */
+  z.object({ type: z.literal("SET_AVATAR"), avatar: avatarSchema }).strict(),
   /** The active hinter is typing (drives the "writing…" doodle). */
   z.object({ type: z.literal("TYPING"), typing: z.boolean() }).strict(),
   z.object({ type: z.literal("SUBMIT_HINT"), text: hintSchema }).strict(),

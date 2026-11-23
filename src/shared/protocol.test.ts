@@ -41,6 +41,8 @@ describe("client intents", () => {
       join,
       { ...join, mode: "host", maxPlayers: 6 },
       { ...join, token: "x".repeat(32) },
+      { type: "JOIN", mode: "join", name: "NoDoodle" },
+      { type: "SET_AVATAR", avatar: "owl" },
       { type: "START" },
       { type: "SET_MAX_PLAYERS", maxPlayers: 10 },
       { type: "TYPING", typing: true },
@@ -79,6 +81,7 @@ describe("client intents", () => {
     expect(send({ type: "KICK", targetId: "p2" }).ok).toBe(false); // no kick feature
     expect(send({ type: "START", sneaky: true }).ok).toBe(false);
     expect(send({ ...join, avatar: "dragon" }).ok).toBe(false);
+    expect(send({ type: "SET_AVATAR", avatar: "dragon" }).ok).toBe(false);
     expect(send({ ...join, mode: "host", maxPlayers: 11 }).ok).toBe(false);
     expect(parseClientMessage("not json").ok).toBe(false);
     expect(parseClientMessage(42).ok).toBe(false);

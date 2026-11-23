@@ -11,7 +11,13 @@
  *
  * Shared code: relative imports only.
  */
-import { DIFFICULTY_WEIGHTS, LIMITS, TIMINGS, type AvatarId } from "./config";
+import {
+  AVATARS,
+  DIFFICULTY_WEIGHTS,
+  LIMITS,
+  TIMINGS,
+  type AvatarId,
+} from "./config";
 import type { Hint, Player, RoomState, RoundResult, SecretWord } from "./model";
 import {
   nameKey,
@@ -359,20 +365,22 @@ export function reduce(
         if (s.players.some((p) => nameKey(p.name) === nameKey(message.name))) {
           return fail(connId, "NAME_TAKEN", "Someone already has that name.");
         }
-        if (s.players.some((p) => p.avatar === message.avatar)) {
-          return fail(
-            connId,
-            "AVATAR_TAKEN",
-            "That doodle is taken. Pick another.",
-          );
-        }
       }
+
+      // Doodles are unique per room. Use the preferred one if it's free,
+      // otherwise a random free one (rooms hold ≤ 10 of the 12 doodles).
+      const taken = new Set(s.players.map((p) => p.avatar));
+      const free = AVATARS.filter((a) => !taken.has(a));
+      const avatar: AvatarId =
+        message.avatar && !taken.has(message.avatar)
+          ? message.avatar
+          : free[Math.floor(ctx.random() * free.length)];
 
       const player: Player = {
         id: event.newSeatId,
         token: event.newToken,
         name: message.name,
-        avatar: message.avatar as AvatarId,
+        avatar,
         joinedAt: ctx.now,
         connected: true,
         disconnectedAt: null,
@@ -392,6 +400,26 @@ export function reduce(
       const round = s.round;
 
       switch (message.type) {
+        case "SET_AVATAR": {
+          if (s.phase !== "LOBBY") {
+            return fail(
+              connId,
+              "WRONG_PHASE",
+              "Change doodles in the waiting room.",
+            );
+          }
+          if (me.avatar === message.avatar) return { state: prev, effects: [] };
+          if (s.players.some((p) => p.avatar === message.avatar)) {
+            return fail(
+              connId,
+              "AVATAR_TAKEN",
+              "That doodle is taken. Pick another.",
+            );
+          }
+          me.avatar = message.avatar;
+          break;
+        }
+
         case "SET_MAX_PLAYERS": {
           if (!isHost)
             return fail(connId, "NOT_HOST", "Only the host can change that.");

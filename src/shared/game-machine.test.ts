@@ -139,29 +139,86 @@ describe("lobby: host and join", () => {
     expect(r.errorOf(r.join("Four"))).toBe("ROOM_FULL");
   });
 
-  it("rejects a taken avatar", () => {
+  it("gives a free doodle when the preferred one is taken (joining never fails on avatars)", () => {
     const r = room();
     r.join("Ren", "host");
+    const taken = r.state.players[0].avatar;
     const res = reduce(
       r.state,
       {
         type: "JOIN",
         connId: "x",
-        message: {
-          type: "JOIN",
-          mode: "join",
-          name: "Copy",
-          avatar: r.state.players[0].avatar,
-        },
+        message: { type: "JOIN", mode: "join", name: "Copy", avatar: taken },
         newSeatId: "px",
         newToken: "t".repeat(20),
       },
       { now: 0, random: () => 0, words: WORDS },
     );
-    expect(res.effects[0]).toMatchObject({
-      type: "ERROR",
-      code: "AVATAR_TAKEN",
+    expect(res.effects).toContainEqual({
+      type: "BIND",
+      connId: "x",
+      seatId: "px",
     });
+    const copy = res.state.players.find((p) => p.id === "px")!;
+    expect(copy.avatar).not.toBe(taken);
+  });
+
+  it("assigns a doodle when none is requested, all unique", () => {
+    const r = room();
+    const join = (id: string, name: string, mode: "host" | "join") => {
+      const res = reduce(
+        r.state,
+        {
+          type: "JOIN",
+          connId: id,
+          message: { type: "JOIN", mode, name },
+          newSeatId: id,
+          newToken: `${id}-${"t".repeat(20)}`,
+        },
+        { now: 0, random: Math.random, words: WORDS },
+      );
+      return res.state;
+    };
+    let s = join("a", "Ann", "host");
+    for (const [id, name] of [
+      ["b", "Bob"],
+      ["c", "Cid"],
+      ["d", "Dee"],
+    ] as const) {
+      s = reduce(
+        s,
+        {
+          type: "JOIN",
+          connId: id,
+          message: { type: "JOIN", mode: "join", name },
+          newSeatId: id,
+          newToken: `${id}-${"t".repeat(20)}`,
+        },
+        { now: 0, random: Math.random, words: WORDS },
+      ).state;
+    }
+    const avatars = s.players.map((p) => p.avatar);
+    expect(avatars).toHaveLength(4);
+    expect(new Set(avatars).size).toBe(4);
+    for (const a of avatars) expect(AVATARS).toContain(a);
+  });
+
+  it("lets players switch to a free doodle in the lobby only", () => {
+    const r = room();
+    r.join("Host", "host");
+    r.join("Two");
+    const [host, two] = r.state.players;
+    const free = AVATARS.find((a) => a !== host.avatar && a !== two.avatar)!;
+    r.act("p1", { type: "SET_AVATAR", avatar: free });
+    expect(r.state.players[0].avatar).toBe(free);
+    expect(r.errorOf(r.act("p2", { type: "SET_AVATAR", avatar: free }))).toBe(
+      "AVATAR_TAKEN",
+    );
+    r.join("Three");
+    r.act("p1", { type: "START" });
+    expect(
+      r.errorOf(r.act("p1", { type: "SET_AVATAR", avatar: host.avatar })),
+    ).toBe("WRONG_PHASE");
   });
 
   it("rejects new players once a round is in progress", () => {
