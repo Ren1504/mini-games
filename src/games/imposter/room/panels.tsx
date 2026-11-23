@@ -23,6 +23,8 @@ import {
 } from "@/shared/protocol";
 import { HintsNotebook, playerMap } from "./parts";
 import { DoodleConfetti, SneakOff, TearAway } from "./ResultEffects";
+import { saveAvatarPreference } from "../identity";
+import { AvatarPicker } from "../ui/AvatarPicker";
 import { SecretCard } from "./SecretCard";
 
 type PanelProps = {
@@ -50,10 +52,24 @@ export function LobbyPanel({ state, you, send }: PanelProps) {
   const need = Math.max(0, LIMITS.MIN_PLAYERS - connected);
   const host = playerMap(state).get(state.hostId ?? "");
   const last = state.result;
+  const me = state.players.find((p) => p.id === you.playerId);
+  const takenByOthers = state.players
+    .filter((p) => p.id !== you.playerId)
+    .map((p) => p.avatar);
 
   return (
     <div className="flex flex-col gap-6">
       <Title>Waiting room</Title>
+      {me && (
+        <AvatarPicker
+          value={me.avatar}
+          taken={takenByOthers}
+          onChange={(avatar) => {
+            send({ type: "SET_AVATAR", avatar });
+            saveAvatarPreference(state.code, avatar);
+          }}
+        />
+      )}
       {last && (
         <p className="font-note text-2xl text-sketch">
           Last round: the word was{" "}

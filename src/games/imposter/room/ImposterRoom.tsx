@@ -173,10 +173,7 @@ export function ImposterRoom({ code }: { code: string }) {
   }
 
   const joinError = room.joinError;
-  if (
-    joinError &&
-    (joinError.code === "NAME_TAKEN" || joinError.code === "AVATAR_TAKEN")
-  ) {
+  if (joinError && joinError.code === "NAME_TAKEN") {
     return (
       <Centered>
         <HandLettered

@@ -23,7 +23,6 @@ const JOIN_ERRORS: ReadonlySet<ErrorCode> = new Set([
   "ROOM_FULL",
   "IN_PROGRESS",
   "NAME_TAKEN",
-  "AVATAR_TAKEN",
 ]);
 
 export type RoomError = { code: ErrorCode; message: string; at: number };
@@ -66,7 +65,7 @@ export function useImposterRoom(code: string, identity: Identity | null) {
       type: "JOIN",
       mode: id.mode,
       name: id.name,
-      avatar: id.avatar,
+      ...(id.avatar ? { avatar: id.avatar } : {}),
       ...(tokenRef.current ? { token: tokenRef.current } : {}),
       ...(id.mode === "host" && id.maxPlayers
         ? { maxPlayers: id.maxPlayers }

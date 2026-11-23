@@ -1,13 +1,9 @@
 "use client";
 
 import { useId, useState, type FormEvent } from "react";
-import { DoodleAvatar, AVATAR_NAMES } from "@/components/sketch/DoodleAvatar";
-import { DoodleIcon } from "@/components/sketch/DoodleIcon";
 import { SketchBox } from "@/components/sketch/SketchBox";
 import { SketchButton } from "@/components/sketch/SketchButton";
-import { crayon, ink } from "@/lib/palette";
 import {
-  AVATARS,
   LIMITS,
   ROOM_CODE_ALPHABET,
   ROOM_CODE_LENGTH,
@@ -20,36 +16,30 @@ type Props = {
   mode: "host" | "join";
   /** Joining through an invite link: the code is already known. */
   fixedCode?: string;
-  initial?: { name: string; avatar: AvatarId } | null;
+  /** Last name used (and doodle, sent as a preference). */
+  initial?: { name: string; avatar?: AvatarId } | null;
   /** Server-side problem to show (name taken, room full, …). */
   error?: string | null;
-  /** Doodles other players already picked (when known). */
-  takenAvatars?: readonly AvatarId[];
   submitLabel: string;
   onSubmit: (identity: Identity, code: string | null) => void;
 };
 
 const codeFilter = new RegExp(`[^${ROOM_CODE_ALPHABET}]`, "g");
 
-/** Name + doodle (+ max players for hosts, + room code for joiners). */
+/**
+ * Name (+ max players for hosts, + room code for joiners). Doodles are
+ * picked in the lobby; the last one used is sent along as a preference.
+ */
 export function IdentityForm({
   mode,
   fixedCode,
   initial,
   error,
-  takenAvatars = [],
   submitLabel,
   onSubmit,
 }: Props) {
   const ids = useId();
   const [name, setName] = useState(initial?.name ?? "");
-  const firstFree =
-    AVATARS.find((a) => !takenAvatars.includes(a)) ?? AVATARS[0];
-  const [avatar, setAvatar] = useState<AvatarId>(
-    initial && !takenAvatars.includes(initial.avatar)
-      ? initial.avatar
-      : firstFree,
-  );
   const [maxPlayers, setMaxPlayers] = useState<number>(LIMITS.MAX_PLAYERS);
   const [code, setCode] = useState(fixedCode ?? "");
   const [touched, setTouched] = useState(false);
@@ -71,8 +61,8 @@ export function IdentityForm({
     onSubmit(
       {
         name: nameCheck.data,
-        avatar,
         mode,
+        ...(initial?.avatar ? { avatar: initial.avatar } : {}),
         ...(mode === "host" ? { maxPlayers } : {}),
       },
       fixedCode ?? (codeCheck?.success ? codeCheck.data : null),
@@ -152,59 +142,6 @@ export function IdentityForm({
           </p>
         )}
       </div>
-
-      <fieldset className="flex flex-col gap-2">
-        <legend className="mb-2 font-hand text-2xl">Pick your doodle</legend>
-        <div className="grid grid-cols-4 gap-2 sm:grid-cols-6">
-          {AVATARS.map((a) => {
-            const taken = takenAvatars.includes(a);
-            const checked = a === avatar;
-            return (
-              <label
-                key={a}
-                data-focus-ring
-                className={`relative grid place-items-center ${taken ? "cursor-not-allowed" : ""}`}
-              >
-                <input
-                  type="radio"
-                  name={`${ids}-avatar`}
-                  value={a}
-                  checked={checked}
-                  disabled={taken}
-                  onChange={() => setAvatar(a)}
-                  className="peer sr-only"
-                />
-                <SketchBox
-                  as="span"
-                  seed={`pick-${a}`}
-                  stroke={checked ? ink.graphite : ink.sketch}
-                  strokeWidth={checked ? 2.6 : 1.3}
-                  fill={checked ? crayon.yellow : undefined}
-                  hachureGap={7}
-                  fillWeight={1.2}
-                  className="grid size-16 place-items-center sm:size-[4.5rem]"
-                >
-                  <DoodleAvatar avatar={a} size={46} faded={taken} />
-                </SketchBox>
-                <span className="sr-only">
-                  {AVATAR_NAMES[a]}
-                  {taken ? " (taken)" : ""}
-                </span>
-                {checked && (
-                  <span className="absolute -top-1 -right-1" aria-hidden="true">
-                    <DoodleIcon
-                      name="check"
-                      size={22}
-                      color={crayon.red}
-                      strokeWidth={2.8}
-                    />
-                  </span>
-                )}
-              </label>
-            );
-          })}
-        </div>
-      </fieldset>
 
       {mode === "host" && (
         <div className="flex flex-wrap items-center gap-4">
