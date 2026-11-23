@@ -103,7 +103,7 @@ export function IdentityForm({
               aria-invalid={Boolean(codeError)}
               aria-describedby={codeError ? `${ids}-code-err` : undefined}
               placeholder="K7QFM"
-              className="w-full bg-transparent py-3 font-hand text-3xl tracking-[0.35em] text-graphite uppercase outline-none placeholder:text-sketch/50"
+              className="w-full bg-transparent py-3 font-code text-3xl font-bold tracking-[0.3em] text-graphite uppercase outline-none placeholder:text-sketch/50"
             />
           </SketchBox>
           {codeError && (

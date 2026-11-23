@@ -131,12 +131,7 @@ export function ImposterRoom({ code }: { code: string }) {
   if (!identity) {
     return (
       <Centered>
-        <HandLettered
-          as="h1"
-          text={`Join room ${code}`}
-          seed="join-room"
-          className="font-hand text-5xl"
-        />
+        <JoinHeading code={code} />
         <IdentityForm
           mode="join"
           fixedCode={code}
@@ -176,12 +171,7 @@ export function ImposterRoom({ code }: { code: string }) {
   if (joinError && joinError.code === "NAME_TAKEN") {
     return (
       <Centered>
-        <HandLettered
-          as="h1"
-          text={`Join room ${code}`}
-          seed="join-room"
-          className="font-hand text-5xl"
-        />
+        <JoinHeading code={code} />
         <IdentityForm
           key={joinError.at}
           mode={identity.mode}
@@ -431,6 +421,26 @@ function Joining({
         Try again
       </SketchButton>
     </Centered>
+  );
+}
+
+/** "Join room" in hand lettering, the code itself in the clear code font. */
+function JoinHeading({ code }: { code: string }) {
+  return (
+    <h1 className="flex flex-col items-center gap-2">
+      <HandLettered
+        as="span"
+        text="Join room"
+        seed="join-room"
+        className="font-hand text-5xl"
+      />
+      <span
+        className="font-code text-4xl font-bold tracking-[0.15em] text-graphite"
+        aria-label={code.split("").join(" ")}
+      >
+        {code}
+      </span>
+    </h1>
   );
 }
 

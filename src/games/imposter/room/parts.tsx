@@ -178,7 +178,7 @@ export function RoomCodeNote({ code }: { code: string }) {
         <div className="flex flex-col leading-none">
           <span className="font-note text-lg">room code</span>
           <span
-            className="font-hand text-4xl tracking-[0.2em]"
+            className="font-code text-3xl font-bold tracking-[0.15em]"
             aria-label={`Room code ${code.split("").join(" ")}`}
           >
             {code}

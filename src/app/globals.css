@@ -42,6 +42,8 @@
   --font-hand: var(--font-gochi), "Comic Sans MS", cursive;
   --font-body: var(--font-patrick), "Comic Sans MS", cursive;
   --font-note: var(--font-caveat), "Comic Sans MS", cursive;
+  /* Room codes: every character easy to tell apart. */
+  --font-code: var(--font-atkinson-mono), ui-monospace, monospace;
 }
 
 :root {

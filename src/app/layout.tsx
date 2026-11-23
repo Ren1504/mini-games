@@ -1,5 +1,10 @@
 import type { Metadata, Viewport } from "next";
-import { Caveat, Gochi_Hand, Patrick_Hand } from "next/font/google";
+import {
+  Atkinson_Hyperlegible_Mono,
+  Caveat,
+  Gochi_Hand,
+  Patrick_Hand,
+} from "next/font/google";
 import { PencilCursor } from "@/components/fx/PencilCursor";
 import { SketchFocusRing } from "@/components/fx/SketchFocusRing";
 import { Footer } from "@/components/layout/Footer";
@@ -29,6 +34,17 @@ const caveat = Caveat({
   display: "swap",
 });
 
+/**
+ * Room codes only: a font built so lookalikes stay distinct (G/6, S/5,
+ * Z/2, B/8, 0/O, 1/I). The hand fonts blur them.
+ */
+const codeFont = Atkinson_Hyperlegible_Mono({
+  weight: "700",
+  subsets: ["latin"],
+  variable: "--font-atkinson-mono",
+  display: "swap",
+});
+
 export const metadata: Metadata = {
   title: { default: "Doodle Arcade", template: "%s · Doodle Arcade" },
   description:
@@ -49,7 +65,7 @@ export default function RootLayout({ children, modal }: LayoutProps<"/">) {
     <html
       lang="en"
       data-scroll-behavior="smooth"
-      className={`${gochi.variable} ${patrick.variable} ${caveat.variable}`}
+      className={`${gochi.variable} ${patrick.variable} ${caveat.variable} ${codeFont.variable}`}
       suppressHydrationWarning
     >
       <head>
