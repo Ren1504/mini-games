@@ -78,6 +78,10 @@ export const sound = {
   sliceLength: 0.4,
   fadeOut: 0.08,
   volume: 0.8,
+  /** Countdown tick (generated, no file): pitch, length, loudness. */
+  tickHz: 1400,
+  tickLength: 0.035,
+  tickVolume: 0.12,
 } as const;
 
 // ── Effects ─────────────────────────────────────────────────────────

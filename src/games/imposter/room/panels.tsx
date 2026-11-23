@@ -22,6 +22,7 @@ import {
   type PublicState,
 } from "@/shared/protocol";
 import { HintsNotebook, playerMap } from "./parts";
+import { DoodleConfetti, SneakOff, TearAway } from "./ResultEffects";
 import { SecretCard } from "./SecretCard";
 
 type PanelProps = {
@@ -532,17 +533,22 @@ export function ResultPanel({ state, you, send }: PanelProps) {
             {/* The stamp sits on a wrapper, not inside the torn paper:
                 the paper's ragged edge is a clip mask and would cut it. */}
             <div className="relative">
+              {result.outcome === "CAUGHT" && (
+                <DoodleConfetti seed={result.imposterId} />
+              )}
               <TornEdge
                 seed="reveal-paper"
                 paperClassName="relative px-12 pt-14 pb-6 sm:px-16"
               >
                 <div className="flex flex-col items-center gap-2">
                   {imposter && (
-                    <DoodleAvatar
-                      avatar={imposter.avatar}
-                      size={110}
-                      label={imposter.name}
-                    />
+                    <SneakOff active={result.outcome === "ESCAPED"}>
+                      <DoodleAvatar
+                        avatar={imposter.avatar}
+                        size={110}
+                        label={imposter.name}
+                      />
+                    </SneakOff>
                   )}
                   <span className="font-hand text-3xl">
                     {imposter?.name ?? "Someone"}
@@ -551,6 +557,7 @@ export function ResultPanel({ state, you, send }: PanelProps) {
                     was the imposter
                   </span>
                 </div>
+                <TearAway seed={result.imposterId} />
               </TornEdge>
               <motion.span
                 aria-hidden="true"

@@ -1,7 +1,8 @@
 "use client";
 
 import { motion } from "motion/react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useSound } from "@/components/fx/Sound";
 import { StickyNote } from "@/components/paper/StickyNote";
 import { DoodleAvatar } from "@/components/sketch/DoodleAvatar";
 import { DoodleIcon } from "@/components/sketch/DoodleIcon";
@@ -30,8 +31,14 @@ export function TimerRing({
   total: number;
 }) {
   const reduced = useReducedMotionSafe();
+  const { tick } = useSound();
   const seconds = Math.ceil(remaining / 1000);
   const urgent = seconds <= 5;
+
+  // One soft tick per second in the last 5 seconds (only if sound is on).
+  useEffect(() => {
+    if (seconds >= 1 && seconds <= 5) tick();
+  }, [seconds, tick]);
   const progress = Math.max(0, Math.min(1, remaining / total));
   return (
     <motion.div

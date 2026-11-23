@@ -21,12 +21,15 @@ type SoundApi = {
   toggle: () => void;
   /** Short paper rustle for clicks, taps and merges (no-op when muted). */
   rustle: () => void;
+  /** Soft countdown tick, generated in the browser (no-op when muted). */
+  tick: () => void;
 };
 
 const SoundContext = createContext<SoundApi>({
   enabled: false,
   toggle: () => {},
   rustle: () => {},
+  tick: () => {},
 });
 
 function readEnabled(): boolean {
@@ -123,6 +126,27 @@ export function SoundProvider({ children }: { children: ReactNode }) {
     [context, load],
   );
 
+  /** A tiny pencil-tap click: a short, quickly fading sine blip. */
+  const tick = useCallback(() => {
+    if (!readEnabled()) return;
+    const ctx = context();
+    if (ctx.state === "suspended") void ctx.resume();
+    const now = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(sound.tickHz, now);
+    osc.frequency.exponentialRampToValueAtTime(
+      sound.tickHz * 0.6,
+      now + sound.tickLength,
+    );
+    const gain = ctx.createGain();
+    gain.gain.setValueAtTime(sound.tickVolume, now);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + sound.tickLength);
+    osc.connect(gain).connect(ctx.destination);
+    osc.start(now);
+    osc.stop(now + sound.tickLength + 0.01);
+  }, [context]);
+
   const rustle = useCallback(() => {
     if (readEnabled()) void play(false);
   }, [play]);
@@ -139,8 +163,8 @@ export function SoundProvider({ children }: { children: ReactNode }) {
   }, [play]);
 
   const api = useMemo(
-    () => ({ enabled, toggle, rustle }),
-    [enabled, toggle, rustle],
+    () => ({ enabled, toggle, rustle, tick }),
+    [enabled, toggle, rustle, tick],
   );
   return <SoundContext.Provider value={api}>{children}</SoundContext.Provider>;
 }

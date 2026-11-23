@@ -63,8 +63,12 @@ export function Scribble({
         strokeWidth={4}
         strokeLinecap="round"
         strokeLinejoin="round"
-        initial={reduced ? { opacity: 0 } : { pathLength: 0 }}
-        animate={reduced ? { opacity: 0.9 } : { pathLength: 1 }}
+        // Always finish the stroke (pathLength → 1). The server renders
+        // before the reduced-motion preference is known, so a reduced
+        // variant without pathLength would leave the line undrawn.
+        // Reduced motion just makes it a quick fade-in instead of a draw.
+        initial={{ pathLength: 0, opacity: reduced ? 0 : 0.9 }}
+        animate={{ pathLength: 1, opacity: 0.9 }}
         transition={
           reduced
             ? { duration: duration.reduced, delay }
