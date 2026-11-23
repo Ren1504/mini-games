@@ -100,7 +100,6 @@ describe("public state can't leak secrets", () => {
         name: "Ren",
         avatar: "cat",
         connected: true,
-        spectator: false,
         isHost: true,
       },
     ],

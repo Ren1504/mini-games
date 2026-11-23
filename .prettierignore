@@ -5,3 +5,6 @@ coverage
 node_modules
 package-lock.json
 next-env.d.ts
+party/node_modules
+party/.wrangler
+party/worker-configuration.d.ts

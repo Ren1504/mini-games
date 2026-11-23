@@ -14,6 +14,10 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Imposter game server: its own package (wrangler output, deps).
+    "party/node_modules/**",
+    "party/.wrangler/**",
+    "party/worker-configuration.d.ts",
   ]),
 ]);
 

@@ -92,8 +92,9 @@ the `/party` worker, never by Next.js code.
   (IMPOSTER_FLED). Host passes to the longest-connected player.
 - Two tabs: the newest connection takes the seat and the old one gets
   `ERROR REPLACED`.
-- Late joiners take a seat as spectators until the next round. They count
-  toward max players.
+- Joining is only possible in the lobby. Opening an invite link mid-round
+  shows "game already in progress" (`ERROR IN_PROGRESS`). Players reclaiming
+  their own seat with their token can always come back.
 
 ## Validation and abuse
 

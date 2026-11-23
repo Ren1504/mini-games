@@ -45,8 +45,6 @@ export type Player = {
   connected: boolean;
   /** When the player dropped (for the reconnect grace period). */
   disconnectedAt: number | null;
-  /** Joined mid-round: watches until the next round starts. */
-  spectator: boolean;
 };
 
 export type Hint = {
@@ -64,6 +62,8 @@ export type RoundState = {
   /** Index into turnOrder of the active hinter (HINTS phase). */
   turnIndex: number;
   hints: Hint[];
+  /** The active hinter is typing (drives the "writing…" doodle). */
+  activeTyping: boolean;
   /** When DISCUSSION started (skip unlocks SKIP_UNLOCK_MS later). */
   discussionStartedAt: number | null;
   /** Players who toggled "skip to voting". */
@@ -106,8 +106,12 @@ export type RoomState = {
   players: Player[];
   round: RoundState | null;
   lastResult: RoundResult | null;
+  /** Rounds started in this room session (numbers the rounds). */
+  roundsPlayed: number;
   /** Word ids already used this session (never repeated until exhausted). */
   usedWordIds: string[];
+  /** When the last connected player left (room storage is wiped later). */
+  emptySince: number | null;
   /** Incremented on every change; lets clients drop out-of-order states. */
   version: number;
 };

@@ -167,7 +167,6 @@ export const publicPlayerSchema = z
     name: z.string(),
     avatar: avatarSchema,
     connected: z.boolean(),
-    spectator: z.boolean(),
     isHost: z.boolean(),
   })
   .strict();
@@ -221,7 +220,7 @@ export const publicStateSchema = z
     hostId: seatIdSchema.nullable(),
     players: z.array(publicPlayerSchema),
     round: publicRoundSchema.nullable(),
-    /** Only present in RESULT (and the lobby right after a round). */
+    /** Set in RESULT, and kept in the lobby until the next round starts. */
     result: publicResultSchema.nullable(),
   })
   .strict();
@@ -232,7 +231,7 @@ export const privateViewSchema = z
     playerId: seatIdSchema,
     /** Store it (localStorage) to reclaim this seat after a refresh. */
     token: tokenSchema,
-    role: z.enum(["lobby", "crewmate", "imposter", "spectator"]),
+    role: z.enum(["lobby", "crewmate", "imposter"]),
     card: z
       .discriminatedUnion("kind", [
         z
@@ -261,6 +260,8 @@ export const errorCodeSchema = z.enum([
   "ROOM_NOT_FOUND",
   "CODE_IN_USE",
   "ROOM_FULL",
+  /** A round is being played; joining is only possible in the lobby. */
+  "IN_PROGRESS",
   "NAME_TAKEN",
   "AVATAR_TAKEN",
   "NOT_HOST",

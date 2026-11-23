@@ -1,0 +1,20 @@
+{
+  // Imposter game server (Cloudflare free plan).
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "doodle-arcade-imposter",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-11-01",
+  // PartyServer can't infer bindings or migrations: both are declared here.
+  "durable_objects": {
+    "bindings": [
+      // Binding name → party name "imposter-room" (kebab-case), matching
+      // PARTY_NAME in src/shared/config.ts.
+      { "name": "ImposterRoom", "class_name": "ImposterRoom" },
+    ],
+  },
+  "migrations": [
+    // SQLite-backed Durable Objects are required on the free plan.
+    { "tag": "v1", "new_sqlite_classes": ["ImposterRoom"] },
+  ],
+  "observability": { "enabled": true },
+}

@@ -42,3 +42,8 @@ next-env.d.ts
 
 # claude code
 /.claude/
+
+# imposter game server (party/)
+/party/node_modules
+/party/.wrangler
+/party/.dev.vars
