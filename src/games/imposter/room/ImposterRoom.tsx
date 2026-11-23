@@ -234,7 +234,7 @@ export function ImposterRoom({ code }: { code: string }) {
     );
   }
 
-  if (!room.state || !room.you) return <Loading text="Joining the room…" />;
+  if (!room.state || !room.you) return <Joining status={room.status} />;
 
   return (
     <RoomView
@@ -382,6 +382,55 @@ function Centered({ children }: { children: ReactNode }) {
     <div className="flex flex-col items-center gap-6 py-6 text-center">
       {children}
     </div>
+  );
+}
+
+/** How long to wait before saying the game server can't be reached. */
+const UNREACHABLE_AFTER_MS = 6000;
+
+/**
+ * "Joining the room…", but if nothing arrives within a few seconds and
+ * the socket isn't connected, say so plainly instead of spinning forever.
+ */
+function Joining({
+  status,
+}: {
+  status: ReturnType<typeof useImposterRoom>["status"];
+}) {
+  const [slow, setSlow] = useState(false);
+  useEffect(() => {
+    const t = window.setTimeout(() => setSlow(true), UNREACHABLE_AFTER_MS);
+    return () => window.clearTimeout(t);
+  }, []);
+
+  if (!slow) return <Loading text="Joining the room…" />;
+  if (status === "connected") return <Loading text="Still joining…" />;
+  return (
+    <Centered>
+      <HandLettered
+        as="h1"
+        text="Can't reach the game server"
+        seed="unreachable"
+        className="font-hand text-4xl sm:text-5xl"
+      />
+      <p className="max-w-md text-xl" role="alert">
+        {status === "offline"
+          ? "You seem to be offline. Check your internet connection."
+          : "The game server isn't answering. It keeps retrying in the background."}
+      </p>
+      <p className="max-w-md font-note text-xl text-sketch">
+        Running it on your own computer? Make sure <code>npm run dev:all</code>{" "}
+        is running (it starts the game server on port 1999).
+      </p>
+      <SketchButton
+        seed="unreachable-retry"
+        filled
+        color="blue"
+        onClick={() => window.location.reload()}
+      >
+        Try again
+      </SketchButton>
+    </Centered>
   );
 }
 
