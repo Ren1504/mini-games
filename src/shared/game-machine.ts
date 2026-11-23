@@ -11,7 +11,7 @@
  *
  * Shared code: relative imports only.
  */
-import { LIMITS, TIMINGS, type AvatarId } from "./config";
+import { DIFFICULTY_WEIGHTS, LIMITS, TIMINGS, type AvatarId } from "./config";
 import type { Hint, Player, RoomState, RoundResult, SecretWord } from "./model";
 import {
   nameKey,
@@ -152,7 +152,23 @@ function pickWord(s: RoomState, ctx: MachineContext): SecretWord {
     s.usedWordIds = [];
     pool = [...ctx.words];
   }
-  const word = pool[Math.floor(ctx.random() * pool.length)];
+  // Pick a difficulty tier first (by weight, among tiers that still have
+  // unused words), then a word within it.
+  const tiers = ([1, 2, 3] as const).filter((d) =>
+    pool.some((w) => (w.difficulty ?? 1) === d),
+  );
+  const total = tiers.reduce((sum, d) => sum + DIFFICULTY_WEIGHTS[d], 0);
+  let roll = ctx.random() * total;
+  let tier = tiers[tiers.length - 1];
+  for (const d of tiers) {
+    roll -= DIFFICULTY_WEIGHTS[d];
+    if (roll < 0) {
+      tier = d;
+      break;
+    }
+  }
+  const inTier = pool.filter((w) => (w.difficulty ?? 1) === tier);
+  const word = inTier[Math.floor(ctx.random() * inTier.length)];
   s.usedWordIds.push(word.id);
   return word;
 }

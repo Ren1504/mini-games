@@ -59,5 +59,11 @@ export const AVATARS = [
 
 export type AvatarId = (typeof AVATARS)[number];
 
+/**
+ * How often each difficulty is picked (relative weights per tier, not per
+ * word): ~60% easy, 30% medium, 10% hard.
+ */
+export const DIFFICULTY_WEIGHTS = { 1: 6, 2: 3, 3: 1 } as const;
+
 /** The PartyServer party name (kebab-case of the Durable Object binding). */
 export const PARTY_NAME = "imposter-room";

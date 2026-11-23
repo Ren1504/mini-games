@@ -31,6 +31,8 @@ export type SecretWord = {
   word: string;
   category: WordCategory;
   imposterClue: string;
+  /** 1 = everyone knows it … 3 = a stretch. Weights the random pick. */
+  difficulty?: 1 | 2 | 3;
 };
 
 export type Player = {
