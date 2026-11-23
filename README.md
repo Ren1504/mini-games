@@ -76,6 +76,16 @@ All colors are CSS variables in `src/app/globals.css`: the light set in
 recolors without being redrawn. A tiny inline script in `layout.tsx` sets
 `data-theme` before first paint, so the page never flashes the wrong theme.
 
+## Imposter (real-time multiplayer)
+
+Imposter is a 3–10 player party game with a real-time game server
+(`party/`, Cloudflare Workers + Durable Objects, free plan). Run everything
+locally with `npm run party:install && npm run dev:all`.
+
+How to play with several players locally, deploy to Cloudflare + Vercel for
+free, add words and change timers: [docs/imposter/README.md](docs/imposter/README.md).
+Internals: [docs/imposter/ARCHITECTURE.md](docs/imposter/ARCHITECTURE.md).
+
 ## Sound
 
 Sound effects are muted by default; the speaker button in the header turns
