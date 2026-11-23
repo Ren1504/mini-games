@@ -12,11 +12,33 @@ type Ring = { x: number; y: number; w: number; h: number; key: number };
 
 const PAD = 10;
 
+const NOT_TEXT = new Set([
+  "checkbox",
+  "radio",
+  "button",
+  "submit",
+  "reset",
+  "range",
+  "color",
+  "file",
+  "image",
+]);
+
+/**
+ * Typing boxes get no circle: their own sketch border turns blue instead
+ * (see [data-text-field] in globals.css).
+ */
+const isTextEntry = (el: Element) =>
+  el instanceof HTMLTextAreaElement ||
+  (el instanceof HTMLElement && el.isContentEditable) ||
+  (el instanceof HTMLInputElement && !NOT_TEXT.has(el.type));
+
 /**
  * Keyboard focus indicator drawn as a crayon circle. One fixed overlay
  * follows the focused element (it never sits inside tilted cards, so it
  * can't be clipped or rotated). Elements can point the ring at a bigger
  * box with data-focus-ring on an ancestor (the whole game card).
+ * Text fields are skipped: their sketch border highlights instead.
  * Native outlines come back if this component never mounts, and in
  * Windows High Contrast mode.
  */
@@ -70,7 +92,8 @@ export function SketchFocusRing() {
     };
     const onFocusIn = (e: FocusEvent) => {
       const el = e.target instanceof Element ? e.target : null;
-      target = el && el.matches(":focus-visible") ? el : null;
+      target =
+        el && el.matches(":focus-visible") && !isTextEntry(el) ? el : null;
       schedule();
     };
     const onFocusOut = () => {

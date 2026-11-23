@@ -82,6 +82,7 @@ export function IdentityForm({
           </label>
           <SketchBox
             seed="imposter-code-input"
+            data-text-field
             strokeWidth={2.2}
             className="px-4"
           >
@@ -120,6 +121,7 @@ export function IdentityForm({
         </label>
         <SketchBox
           seed="imposter-name-input"
+          data-text-field
           strokeWidth={2.2}
           className="px-4"
         >

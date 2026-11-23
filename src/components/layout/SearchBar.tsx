@@ -46,6 +46,7 @@ export function SearchBar() {
       <div ref={scope}>
         <SketchBox
           seed="search"
+          data-text-field
           strokeWidth={2.4}
           roughness={1.4}
           className="flex min-h-14 items-center gap-3 px-4"

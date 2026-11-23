@@ -308,6 +308,7 @@ function HintInput({ send }: { send: (m: ClientMessage) => void }) {
       <div className="flex flex-wrap items-center gap-3">
         <SketchBox
           seed="hint-input"
+          data-text-field
           strokeWidth={2.4}
           className="min-w-0 flex-1 px-4"
         >

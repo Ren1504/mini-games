@@ -245,6 +245,18 @@ html.sketch-focus :focus-visible {
   }
 }
 
+/* Text fields: no crayon circle (SketchFocusRing skips them); the field's
+   own sketch border turns blue and thicker while you type. */
+[data-text-field] > svg path {
+  transition:
+    stroke 0.15s ease,
+    stroke-width 0.15s ease;
+}
+[data-text-field]:focus-within > svg path {
+  stroke: var(--color-crayon-blue);
+  stroke-width: 3.2px;
+}
+
 /* Search field: the sketch box draws the border; hide native chrome. */
 input[type="search"]::-webkit-search-cancel-button {
   appearance: none;
