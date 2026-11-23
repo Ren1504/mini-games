@@ -112,18 +112,20 @@ Words live in [`src/data/imposter-words.ts`](../../src/data/imposter-words.ts),
 one row per word, grouped by category:
 
 ```ts
-["Titanic", "Ocean", 1],   // [word, imposter clue, difficulty]
+["Titanic", "Cold", 1],   // [word, imposter clue, difficulty]
 ```
 
 - **Word:** globally famous (recognisable in India, the USA, Brazil, Japan
   and Europe), nothing political, controversial or NSFW.
-- **Clue:** 1–2 words, related but never a giveaway (`Titanic → "Ocean"`, not
-  `"Ship that sank"`).
+- **Clue:** 1–2 words, only loosely related: with the category it should
+  fit several answers (`Titanic → "Cold"` also fits _Frozen_; `"Ocean"` is too
+  easy, and never `"Ship that sank"`).
 - **Difficulty:** 1 = everyone knows it, 2 = most people, 3 = a stretch.
   Rounds pick about 60% easy, 30% medium, 10% hard (`DIFFICULTY_WEIGHTS`).
 
 Run `npm test`: it checks there are 200+ words, no duplicates, valid ids,
-and that every clue is 1–2 words and doesn't contain its word. The word bank
+and that every clue is 1–2 words, shares no word stem with its answer, isn't
+another answer and isn't a known giveaway prop. The word bank
 is only imported by the game server, so it never reaches the browser.
 
 ## Change timers and limits

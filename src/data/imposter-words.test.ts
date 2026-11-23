@@ -64,6 +64,78 @@ describe("imposter word bank", () => {
     }
   });
 
+  it("keeps clues vague: no shared word stems, no other answers, no signature props", () => {
+    // Words of 4+ letters, compared by their first 4 letters, so "Racing"
+    // can't clue "Cars" racing … and "Swiss" can't clue "Switzerland".
+    const stems = (s: string) =>
+      key(s)
+        .split(/[^a-z0-9]+/)
+        .filter((t) => t.length >= 4)
+        .map((t) => t.slice(0, 4));
+    const answers = new Set(IMPOSTER_WORDS.map((w) => key(w.word)));
+    // Things that almost name the answer on their own (the old, too-easy
+    // clues). A clue should fit several answers in its category.
+    const GIVEAWAYS = new Set(
+      [
+        "football",
+        "racket",
+        "umbrella",
+        "lamp",
+        "honey",
+        "pouch",
+        "mane",
+        "hoop",
+        "bamboo",
+        "swamp",
+        "ocean",
+        "shield",
+        "lasso",
+        "lasagna",
+        "cape",
+        "web",
+        "mushrooms",
+        "nunchucks",
+        "turtleneck",
+        "pineapple",
+        "tracksuit",
+        "bricks",
+        "fries",
+        "torch",
+        "tilt",
+        "canals",
+        "slime",
+        "balloons",
+        "lamp",
+        "rose",
+        "pills",
+        "doghouse",
+        "carrot",
+        "chimney",
+        "straw hat",
+        "police box",
+        "stone age",
+        "eras",
+        "castaway",
+        "eyebrow",
+        "sneakers",
+        "butterfly",
+        "volleyball",
+        "wheelchair",
+        "iceberg",
+      ].map(key),
+    );
+    for (const w of IMPOSTER_WORDS) {
+      const label = `${w.word} → "${w.imposterClue}"`;
+      const wordStems = new Set(stems(w.word));
+      expect(
+        stems(w.imposterClue).filter((s) => wordStems.has(s)),
+        label,
+      ).toEqual([]);
+      expect(answers.has(key(w.imposterClue)), label).toBe(false);
+      expect(GIVEAWAYS.has(key(w.imposterClue)), label).toBe(false);
+    }
+  });
+
   it("uses valid ids and difficulties", () => {
     for (const w of IMPOSTER_WORDS) {
       expect(w.id).toMatch(/^[a-z0-9]+(-[a-z0-9]+)*$/);
