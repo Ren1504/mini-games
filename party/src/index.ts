@@ -283,21 +283,17 @@ export default {
       return new Response("Imposter game server is running.", { status: 200 });
     }
     return (
-      (await routePartykitRequest(
-        request,
-        env as unknown as Record<string, unknown>,
-        {
-          onBeforeConnect: (_req, { name }) => {
-            // Room names must be valid 5-character codes.
-            if (
-              !roomCodeSchema.safeParse(name).success ||
-              name !== name.toUpperCase()
-            ) {
-              return new Response("Invalid room code", { status: 400 });
-            }
-          },
+      (await routePartykitRequest(request, env, {
+        onBeforeConnect: (_req, { name }) => {
+          // Room names must be valid 5-character codes.
+          if (
+            !roomCodeSchema.safeParse(name).success ||
+            name !== name.toUpperCase()
+          ) {
+            return new Response("Invalid room code", { status: 400 });
+          }
         },
-      )) || new Response("Not found", { status: 404 })
+      })) || new Response("Not found", { status: 404 })
     );
   },
 } satisfies ExportedHandler<Env>;

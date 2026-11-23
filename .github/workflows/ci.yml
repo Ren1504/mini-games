@@ -14,9 +14,18 @@ jobs:
         with:
           node-version: 24
           cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            party/package-lock.json
       - run: npm ci
+      - run: npm ci
+        working-directory: party
       - run: npm run format:check
       - run: npm run lint
       - run: npm run typecheck
+      - run: npm run party:typecheck
+      # Site + shared game logic (incl. the simulated 5-player games).
       - run: npm test
+      # Imposter game server inside the real Workers runtime.
+      - run: npm run party:test
       - run: npm run build

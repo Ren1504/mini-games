@@ -15,7 +15,8 @@
     "dev:party": "npm --prefix party run dev",
     "dev:all": "concurrently --kill-others-on-fail --names site,party --prefix-colors blue,magenta \"npm:dev\" \"npm:dev:party\"",
     "party:install": "npm --prefix party install",
-    "party:typecheck": "npm --prefix party run typecheck"
+    "party:typecheck": "npm --prefix party run typecheck",
+    "party:test": "npm --prefix party test"
   },
   "dependencies": {
     "motion": "14.14.0",
