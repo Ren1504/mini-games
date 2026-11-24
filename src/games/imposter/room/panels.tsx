@@ -202,7 +202,7 @@ export function HintsPanel({ state, you, send }: PanelProps) {
     <div className="flex flex-col gap-5">
       <Title>Hint time</Title>
       <ol aria-label="Turn order" className="flex flex-wrap items-center gap-2">
-        {round.turnOrder.map((id, i) => {
+        {round.playerIds.map((id, i) => {
           const p = players.get(id);
           const done = i < round.hints.length;
           const isActive = id === activeId;
@@ -240,7 +240,7 @@ export function HintsPanel({ state, you, send }: PanelProps) {
                   )
                 )}
               </span>
-              {i < round.turnOrder.length - 1 && (
+              {i < round.playerIds.length - 1 && (
                 <span aria-hidden="true" className="text-sketch">
                   →
                 </span>
@@ -405,7 +405,7 @@ export function DiscussionPanel({ state, you, send, serverNow }: PanelProps) {
 export function VotingPanel({ state, you, send }: PanelProps) {
   const round = state.round!;
   const players = playerMap(state);
-  const candidates = round.turnOrder.filter((id) => id !== you.playerId);
+  const candidates = round.playerIds.filter((id) => id !== you.playerId);
   const locked = you.myVoteLocked;
 
   return (
@@ -476,7 +476,7 @@ export function VotingPanel({ state, you, send }: PanelProps) {
           </SketchButton>
         )}
         <span className="font-note text-2xl" aria-live="polite">
-          Locked: {round.lockedVoterIds.length}/{round.eligibleCount}
+          Locked: {round.lockedCount}/{round.eligibleCount}
         </span>
       </div>
       <HintsNotebook state={state} />
@@ -517,7 +517,7 @@ export function ResultPanel({ state, you, send }: PanelProps) {
     return () => window.clearTimeout(t);
   }, [reduced]);
 
-  const voters = state.round?.turnOrder ?? Object.keys(result.votes);
+  const voters = state.round?.playerIds ?? Object.keys(result.tally);
 
   return (
     <div className="flex flex-col items-center gap-6 text-center">
@@ -610,7 +610,7 @@ export function ResultPanel({ state, you, send }: PanelProps) {
               <ul className="mt-2 flex flex-col gap-2">
                 {voters.map((voterId) => {
                   const voter = players.get(voterId);
-                  const target = players.get(result.votes[voterId] ?? "");
+                  const target = players.get("");
                   if (!voter) return null;
                   return (
                     <li

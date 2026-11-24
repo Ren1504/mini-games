@@ -14,8 +14,12 @@ export const TIMINGS = {
   /** Skip-to-voting stays locked for this long at the start of discussion. */
   SKIP_UNLOCK_MS: 30_000,
   VOTE_MS: 30_000,
-  /** A dropped player keeps their seat (and role) this long. */
-  RECONNECT_GRACE_MS: 30_000,
+  /**
+   * A dropped player shows as "reconnecting…" and keeps their seat (and
+   * role) this long; after that they have left. A host who left hands
+   * over to the earliest-joined player still here.
+   */
+  RECONNECT_GRACE_MS: 10_000,
   /** Room storage is wiped this long after the last player leaves. */
   EMPTY_ROOM_TTL_MS: 10 * 60_000,
 } as const;

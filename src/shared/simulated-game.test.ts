@@ -289,12 +289,12 @@ describe("simulated 5-player game", () => {
 });
 
 describe("edge cases", () => {
-  it("reconnect within 30s restores the same seat, role and card", () => {
+  it("reconnect within the grace period restores the same seat, role and card", () => {
     const { room, clients } = fiveStarted();
     const victim = clients[2];
     const before = you(victim);
     room.close(victim);
-    room.advance(10_000);
+    room.advance(TIMINGS.RECONNECT_GRACE_MS - 2_000);
     const again = room.connect();
     room.join(again, "Whatever", "join", before.token);
     expect(you(again)).toMatchObject({
@@ -317,7 +317,7 @@ describe("edge cases", () => {
     expect(hints[0]).toEqual({ playerId: activeSeat, text: null });
   });
 
-  it("imposter gone for more than 30s ends the round as IMPOSTER_FLED", () => {
+  it("imposter gone longer than the grace period ends the round as IMPOSTER_FLED", () => {
     const { room, clients } = fiveStarted();
     const imposter = clients.find((c) => you(c).role === "imposter")!;
     room.close(imposter);

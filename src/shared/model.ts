@@ -47,6 +47,12 @@ export type Player = {
   connected: boolean;
   /** When the player dropped (for the reconnect grace period). */
   disconnectedAt: number | null;
+  /**
+   * Gone for good this round: away longer than the grace period. Their
+   * seat can't be reclaimed until the next lobby (lobby seats are simply
+   * removed instead).
+   */
+  left: boolean;
 };
 
 export type Hint = {
@@ -90,7 +96,7 @@ export type RoundResult = {
   outcome: Outcome;
   imposterId: string;
   secret: SecretWord;
-  /** voterId → targetId, revealed in RESULT. Abstainers are absent. */
+  /** voterId → targetId. Server-only: voting is anonymous, only the tally is published. */
   votes: Record<string, string>;
   /** targetId → vote count. */
   tally: Record<string, number>;

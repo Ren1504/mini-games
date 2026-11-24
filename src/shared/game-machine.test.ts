@@ -280,7 +280,7 @@ describe("assign and reveal", () => {
     expect(r.state.phase).toBe("REVEAL");
   });
 
-  it("sends the word to crewmates and only category + clue to the imposter", () => {
+  it("sends the word + the imposter's clue to crewmates, only category + clue to the imposter", () => {
     const { r, ids } = started(4);
     const imposter = r.state.round!.imposterId;
     for (const id of ids) {
@@ -298,6 +298,7 @@ describe("assign and reveal", () => {
           kind: "word",
           word: "Titanic",
           category: "Movie",
+          imposterClue: "Ocean",
         });
       }
     }
@@ -439,15 +440,31 @@ describe("voting and results", () => {
     ).toBe("ALREADY_LOCKED");
   });
 
-  it("hides vote targets until the result", () => {
+  it("keeps voting anonymous: only a locked count, and only the tally in the result", () => {
     const { r, ids } = started(3);
     toVoting(r);
     r.act(ids[0], { type: "CAST_VOTE", targetId: ids[1] });
     r.act(ids[0], { type: "LOCK_VOTE" });
     const pub = toPublicState(r.state);
-    expect(pub.round!.lockedVoterIds).toEqual([ids[0]]);
+    expect(pub.round!.lockedCount).toBe(1);
     expect(JSON.stringify(pub)).not.toContain(`"${ids[1]}":`);
     expect(pub.result).toBeNull();
+    r.act(ids[1], { type: "CAST_VOTE", targetId: ids[2] });
+    r.act(ids[1], { type: "LOCK_VOTE" });
+    r.act(ids[2], { type: "CAST_VOTE", targetId: ids[1] });
+    r.act(ids[2], { type: "LOCK_VOTE" });
+    const result = toPublicState(r.state).result!;
+    expect(result.tally).toEqual({ [ids[1]]: 2, [ids[2]]: 1 });
+    expect(result).not.toHaveProperty("votes");
+    expect(result.clue).toBe(r.state.lastResult!.secret.imposterClue);
+  });
+
+  it("never publishes the hint order, only whose turn it is", () => {
+    const shuffledFirst = () => 0.99; // a shuffle that reverses join order
+    const { r, ids } = started(4, shuffledFirst);
+    const pub = toPublicState(r.state);
+    expect(pub.round!.playerIds).toEqual(ids);
+    expect(pub.round).not.toHaveProperty("turnOrder");
   });
 
   it("ends early when everyone has locked, and catches a top-voted imposter", () => {
@@ -533,7 +550,7 @@ describe("connections and edge cases", () => {
     );
   });
 
-  it("ends the round as IMPOSTER_FLED after 30s gone", () => {
+  it("ends the round as IMPOSTER_FLED once the imposter is gone past the grace period", () => {
     const { r } = started(4);
     const imposter = r.state.round!.imposterId;
     r.drop(imposter);
@@ -552,6 +569,49 @@ describe("connections and edge cases", () => {
     r.drop(crew);
     r.advance(TIMINGS.RECONNECT_GRACE_MS);
     expect(r.state.lastResult!.outcome).toBe("TOO_FEW_PLAYERS");
+  });
+
+  it("shows a dropped player as reconnecting, then as left; the round goes on", () => {
+    const { r } = started(5);
+    const crew = r.state.round!.turnOrder.find(
+      (id) => id !== r.state.round!.imposterId,
+    )!;
+    const token = r.state.players.find((p) => p.id === crew)!.token;
+    r.drop(crew);
+    let me = toPublicState(r.state).players.find((p) => p.id === crew)!;
+    expect(me).toMatchObject({ connected: false, left: false }); // reconnecting…
+    r.advance(TIMINGS.RECONNECT_GRACE_MS);
+    me = toPublicState(r.state).players.find((p) => p.id === crew)!;
+    expect(me).toMatchObject({ connected: false, left: true }); // left
+    expect(r.state.phase).not.toBe("RESULT"); // 4 still here: keep playing
+    // Too late to reclaim the seat this round.
+    expect(r.errorOf(r.join("again", "join", token))).toBe("IN_PROGRESS");
+  });
+
+  it("hands host to the next-earliest player mid-round, and the round continues", () => {
+    const { r, ids } = started(4, () => 0.99);
+    const imposter = r.state.round!.imposterId;
+    expect(imposter).not.toBe(ids[0]);
+    r.drop(ids[0]); // the host
+    r.advance(TIMINGS.RECONNECT_GRACE_MS - 1);
+    expect(r.state.hostId).toBe(ids[0]); // still reconnecting
+    r.advance(1);
+    expect(r.state.hostId).toBe(ids[1]);
+    expect(r.state.phase).not.toBe("RESULT");
+  });
+
+  it("drops a vote cast by someone who then left, and refuses votes for them", () => {
+    const { r } = started(5);
+    toVoting(r);
+    const imp = r.state.round!.imposterId;
+    const [a, b] = r.state.round!.turnOrder.filter((id) => id !== imp);
+    r.act(a, { type: "CAST_VOTE", targetId: imp });
+    r.drop(a);
+    r.advance(TIMINGS.RECONNECT_GRACE_MS);
+    expect(r.state.round!.votes[a]).toBeUndefined();
+    expect(r.errorOf(r.act(b, { type: "CAST_VOTE", targetId: a }))).toBe(
+      "INVALID_TARGET",
+    );
   });
 
   it("passes host to the longest-connected player after the grace period", () => {

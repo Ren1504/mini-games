@@ -174,7 +174,7 @@ describe("ImposterRoom Durable Object", () => {
     expect(after.role).toBe(before.role);
     expect(after.card).toEqual(before.card);
     const state = await stateWhere(back, (s) => s.phase === "REVEAL");
-    expect(state.round?.turnOrder).toHaveLength(3);
+    expect(state.round?.playerIds).toHaveLength(3);
   });
 
   it("tells a late joiner the game is in progress", async () => {

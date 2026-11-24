@@ -104,11 +104,12 @@ function shuffle<T>(items: readonly T[], random: () => number): T[] {
 const seat = (s: RoomState, id: string | null | undefined) =>
   id ? s.players.find((p) => p.id === id) : undefined;
 
-/** Still counts as "in the room": connected, or dropped less than 30s ago. */
+/** Still counts as "in the room": connected, or dropped less than the grace period ago. */
 const present = (p: Player, now: number) =>
-  p.connected ||
-  (p.disconnectedAt !== null &&
-    now - p.disconnectedAt < TIMINGS.RECONNECT_GRACE_MS);
+  !p.left &&
+  (p.connected ||
+    (p.disconnectedAt !== null &&
+      now - p.disconnectedAt < TIMINGS.RECONNECT_GRACE_MS));
 
 /** Dealt into the current round. */
 const inRound = (s: RoomState, id: string) =>
@@ -285,10 +286,21 @@ function checkPresence(s: RoomState, ctx: MachineContext) {
   if (stillHere.length < LIMITS.MIN_PLAYERS) finishRound(s, "TOO_FEW_PLAYERS");
 }
 
-/** In the lobby, a seat is released once its grace period runs out. */
-function releaseExpiredLobbySeats(s: RoomState, now: number) {
-  if (s.phase !== "LOBBY") return;
-  s.players = s.players.filter((p) => present(p, now));
+/**
+ * Grace period over: in the lobby the seat is released; during a round the
+ * player is marked as left (they stay listed so their hints keep a name)
+ * and any vote they cast is dropped.
+ */
+function releaseExpiredSeats(s: RoomState, now: number) {
+  if (s.phase === "LOBBY") {
+    s.players = s.players.filter((p) => present(p, now));
+    return;
+  }
+  for (const p of s.players) {
+    if (p.left || present(p, now)) continue;
+    p.left = true;
+    if (s.round) delete s.round.votes[p.id];
+  }
 }
 
 // ── Reducer ─────────────────────────────────────────────────────────
@@ -317,6 +329,13 @@ export function reduce(
       const owned = message.token
         ? s.players.find((p) => p.token === message.token)
         : undefined;
+      if (owned?.left) {
+        return fail(
+          connId,
+          "IN_PROGRESS",
+          "You were away too long, so you left this round. Join again when it ends.",
+        );
+      }
       if (owned) {
         owned.connected = true;
         owned.disconnectedAt = null;
@@ -347,7 +366,7 @@ export function reduce(
       } else {
         if (!s.hosted)
           return fail(connId, "ROOM_NOT_FOUND", "No room with that code.");
-        releaseExpiredLobbySeats(s, ctx.now);
+        releaseExpiredSeats(s, ctx.now);
         if (s.phase !== "LOBBY") {
           return fail(
             connId,
@@ -384,6 +403,7 @@ export function reduce(
         joinedAt: ctx.now,
         connected: true,
         disconnectedAt: null,
+        left: false,
       };
       s.players.push(player);
       s.emptySince = null;
@@ -538,7 +558,11 @@ export function reduce(
           if (round.locked.includes(seatId)) {
             return fail(connId, "ALREADY_LOCKED", "Your vote is locked in.");
           }
-          if (message.targetId === seatId || !inRound(s, message.targetId)) {
+          if (
+            message.targetId === seatId ||
+            !inRound(s, message.targetId) ||
+            seat(s, message.targetId)?.left
+          ) {
             return fail(
               connId,
               "INVALID_TARGET",
@@ -625,7 +649,7 @@ export function reduce(
           finishRound(s, decideOutcome(s.round.votes, s.round.imposterId));
         }
       }
-      releaseExpiredLobbySeats(s, now);
+      releaseExpiredSeats(s, now);
       break;
     }
   }
@@ -679,12 +703,16 @@ export function toPublicState(s: RoomState): PublicState {
       name: p.name,
       avatar: p.avatar,
       connected: p.connected,
+      left: p.left,
       isHost: p.id === s.hostId,
     })),
     round: round
       ? {
           number: round.number,
-          turnOrder: [...round.turnOrder],
+          // Join order, so the upcoming hint order stays hidden.
+          playerIds: s.players
+            .filter((p) => round.turnOrder.includes(p.id))
+            .map((p) => p.id),
           activePlayerId:
             s.phase === "HINTS"
               ? (round.turnOrder[round.turnIndex] ?? null)
@@ -704,7 +732,7 @@ export function toPublicState(s: RoomState): PublicState {
                   .length
               : 0,
           eligibleCount: eligible(s).length,
-          lockedVoterIds: s.phase === "VOTING" ? [...round.locked] : [],
+          lockedCount: s.phase === "VOTING" ? round.locked.length : 0,
         }
       : null,
     result:
@@ -714,7 +742,7 @@ export function toPublicState(s: RoomState): PublicState {
             imposterId: s.lastResult.imposterId,
             word: s.lastResult.secret.word,
             category: s.lastResult.secret.category,
-            votes: { ...s.lastResult.votes },
+            clue: s.lastResult.secret.imposterClue,
             tally: { ...s.lastResult.tally },
           }
         : null,
@@ -748,6 +776,7 @@ export function toPrivateView(
             kind: "word",
             word: round.secret.word,
             category: round.secret.category,
+            imposterClue: round.secret.imposterClue,
           },
     myVoteTargetId: dealt ? (round.votes[seatId] ?? null) : null,
     myVoteLocked: Boolean(dealt && round.locked.includes(seatId)),

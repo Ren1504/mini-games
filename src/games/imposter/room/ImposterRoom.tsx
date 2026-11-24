@@ -271,8 +271,6 @@ function RoomView({
         (h) => (m[h.playerId] = h.text === null ? "skipped" : "done"),
       );
       if (round.activePlayerId) m[round.activePlayerId] = "active";
-    } else if (state.phase === "VOTING") {
-      round.lockedVoterIds.forEach((id) => (m[id] = "locked"));
     }
     return m;
   }, [state]);

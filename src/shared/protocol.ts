@@ -171,6 +171,8 @@ export const publicPlayerSchema = z
     name: z.string(),
     avatar: avatarSchema,
     connected: z.boolean(),
+    /** Away longer than the grace period: out of this round. */
+    left: z.boolean(),
     isHost: z.boolean(),
   })
   .strict();
@@ -182,7 +184,11 @@ export const publicPlayerSchema = z
 export const publicRoundSchema = z
   .object({
     number: z.number().int().positive(),
-    turnOrder: z.array(seatIdSchema),
+    /**
+     * Everyone dealt into the round, in JOIN order (not hint order: the
+     * upcoming hint order is never revealed, only whose turn it is now).
+     */
+    playerIds: z.array(seatIdSchema),
     /** Active hinter during HINTS, else null. */
     activePlayerId: seatIdSchema.nullable(),
     /** The active hinter is typing right now. */
@@ -197,8 +203,8 @@ export const publicRoundSchema = z
     skipCount: z.number().int().nonnegative(),
     /** Connected, dealt-in players: the denominator for skips and votes. */
     eligibleCount: z.number().int().nonnegative(),
-    /** Players who locked a vote (who, not for whom). */
-    lockedVoterIds: z.array(seatIdSchema),
+    /** How many votes are locked. Anonymous: never who, never for whom. */
+    lockedCount: z.number().int().nonnegative(),
   })
   .strict();
 
@@ -208,7 +214,9 @@ export const publicResultSchema = z
     imposterId: seatIdSchema,
     word: z.string(),
     category: categorySchema,
-    votes: z.record(z.string(), seatIdSchema),
+    /** The imposter's clue, shown with the word. */
+    clue: z.string(),
+    /** targetId → votes received. Anonymous: who voted for whom is never sent. */
     tally: z.record(z.string(), z.number().int().nonnegative()),
   })
   .strict();
@@ -243,6 +251,11 @@ export const privateViewSchema = z
             kind: z.literal("word"),
             word: z.string(),
             category: categorySchema,
+            /**
+             * Crewmates see the imposter's clue too, so a hint that just
+             * repeats it gives the imposter away.
+             */
+            imposterClue: z.string(),
           })
           .strict(),
         z
