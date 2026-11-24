@@ -14,6 +14,7 @@
  */
 export const playableSlugs: ReadonlySet<string> = new Set([
   "2048",
+  "chess",
   "imposter",
   "memory-match",
 ]);
