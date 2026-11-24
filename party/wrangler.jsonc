@@ -1,5 +1,7 @@
 {
-  // Imposter game server (Cloudflare free plan).
+  // Doodle Arcade game server: Imposter and Chess rooms (Cloudflare free plan).
+  // The Worker keeps its original name so its URL (and the site's
+  // NEXT_PUBLIC_PARTY_HOST) stays the same.
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "doodle-arcade-imposter",
   "main": "src/index.ts",
@@ -10,11 +12,14 @@
       // Binding name → party name "imposter-room" (kebab-case), matching
       // PARTY_NAME in src/shared/config.ts.
       { "name": "ImposterRoom", "class_name": "ImposterRoom" },
+      // → party "chess-room", matching CHESS_PARTY_NAME in src/shared/chess/config.ts.
+      { "name": "ChessRoom", "class_name": "ChessRoom" },
     ],
   },
   "migrations": [
     // SQLite-backed Durable Objects are required on the free plan.
     { "tag": "v1", "new_sqlite_classes": ["ImposterRoom"] },
+    { "tag": "v2", "new_sqlite_classes": ["ChessRoom"] },
   ],
   "observability": { "enabled": true },
 }

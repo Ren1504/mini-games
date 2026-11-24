@@ -1,7 +1,11 @@
 /**
- * Imposter game server: one PartyServer Durable Object per room code.
+ * Doodle Arcade game server. One PartyServer Durable Object per room:
+ *   /parties/imposter-room/<CODE>  → ImposterRoom (below)
+ *   /parties/chess-room/<CODE>     → ChessRoom (./chess-room.ts)
  *
- * Thin adapter around the pure reducer in src/shared/game-machine.ts:
+ * ImposterRoom is a thin adapter around the pure reducer in
+ * src/shared/game-machine.ts:
+
  *   WebSocket frame / alarm → event → reduce() → persist → broadcast →
  *   run effects → schedule the next alarm.
  *
@@ -15,7 +19,6 @@ import {
   type WSMessage,
 } from "partyserver";
 import { IMPOSTER_WORDS } from "../../src/data/imposter-words";
-import { LIMITS } from "../../src/shared/config";
 import {
   initialState,
   nextWakeAt,
@@ -31,41 +34,27 @@ import {
   type ServerMessage,
 } from "../../src/shared/protocol";
 
-type Env = { ImposterRoom: DurableObjectNamespace };
+import { ChessRoom } from "./chess-room";
+import {
+  allowMessage,
+  FRESH,
+  newSeatId,
+  newToken,
+  sendRaw,
+  type ConnState,
+} from "./room-utils";
 
-/** Per-connection data; survives hibernation (max 2 KB). */
-type ConnState = {
-  seatId: string | null;
-  hits: readonly number[];
-  strikes: number;
+export { ChessRoom };
+
+type Env = {
+  ImposterRoom: DurableObjectNamespace;
+  ChessRoom: DurableObjectNamespace;
 };
 
 const STORAGE_KEY = "room";
-const FRESH: ConnState = { seatId: null, hits: [], strikes: 0 };
-
-/**
- * Sends a frame unless the socket is already closing/closed (a client can
- * vanish mid-broadcast, and frames can still be queued after we close a
- * flooding connection). Never throws.
- */
-function sendRaw(conn: Connection, frame: string) {
-  if (conn.readyState !== WebSocket.OPEN) return;
-  try {
-    conn.send(frame);
-  } catch {
-    // The socket closed between the check and the send: nothing to do.
-  }
-}
 
 const send = (conn: Connection, message: ServerMessage) =>
   sendRaw(conn, JSON.stringify(message));
-
-/** Public seat id: short and safe to show. */
-const newSeatId = () =>
-  `p_${crypto.randomUUID().replace(/-/g, "").slice(0, 10)}`;
-/** Secret session token: 64 hex characters from the crypto RNG. */
-const newToken = () =>
-  `${crypto.randomUUID()}${crypto.randomUUID()}`.replace(/-/g, "");
 
 export class ImposterRoom extends Server<Env> {
   static options = { hibernate: true };
@@ -84,28 +73,14 @@ export class ImposterRoom extends Server<Env> {
   }
 
   async onMessage(conn: Connection<ConnState>, raw: WSMessage) {
-    const state = conn.state ?? FRESH;
-    const now = Date.now();
-    // Closed for flooding: ignore whatever was still queued.
-    if (state.strikes >= 3) return;
-
-    // Rate limit: RATE_MAX messages per RATE_WINDOW_MS; 3 strikes → closed.
-    const hits = [
-      ...state.hits.filter((t) => now - t < LIMITS.RATE_WINDOW_MS),
-      now,
-    ];
-    if (hits.length > LIMITS.RATE_MAX) {
-      const strikes = state.strikes + 1;
-      conn.setState({ ...state, hits, strikes });
+    const allowed = allowMessage(conn, Date.now(), () =>
       send(conn, {
         type: "ERROR",
         code: "RATE_LIMITED",
         message: "Slow down a little!",
-      });
-      if (strikes >= 3) conn.close(4008, "Rate limited");
-      return;
-    }
-    conn.setState({ ...state, hits });
+      }),
+    );
+    if (!allowed) return;
 
     const parsed = parseClientMessage(raw);
     if (!parsed.ok) {
@@ -280,7 +255,9 @@ export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
     if (url.pathname === "/" || url.pathname === "/health") {
-      return new Response("Imposter game server is running.", { status: 200 });
+      return new Response("Doodle Arcade game server is running.", {
+        status: 200,
+      });
     }
     return (
       (await routePartykitRequest(request, env, {
