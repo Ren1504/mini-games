@@ -137,7 +137,7 @@ export const games: readonly Game[] = [
     avgMinutes: 4,
     description: "Flip two cards at a time and find every matching pair.",
     howToPlay: [
-      "Pick a board from 4×4 up to 8×8.",
+      "Pick a board from 4×4 up to 8×8, then press Start.",
       "Flip any two cards face up.",
       "If they match, they stay. If not, they flip back.",
       "Find every pair in as few moves and as little time as you can.",

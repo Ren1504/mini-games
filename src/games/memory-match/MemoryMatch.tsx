@@ -81,6 +81,7 @@ function CardButton({
   faceUp,
   missed,
   focusable,
+  locked,
   onFlip,
   onFocus,
   buttonRef,
@@ -92,6 +93,8 @@ function CardButton({
   faceUp: boolean;
   missed: boolean;
   focusable: boolean;
+  /** Setup preview: can't be flipped yet. */
+  locked: boolean;
   onFlip: (index: number) => void;
   onFocus: (index: number) => void;
   buttonRef: (el: HTMLButtonElement | null) => void;
@@ -120,17 +123,17 @@ function CardButton({
       ref={buttonRef}
       type="button"
       aria-label={label}
-      aria-disabled={card.matched || undefined}
+      aria-disabled={card.matched || locked || undefined}
       tabIndex={focusable ? 0 : -1}
       onClick={() => onFlip(index)}
       onFocus={() => onFocus(index)}
       className={cn(
         "relative aspect-square touch-manipulation rounded-md select-none",
-        card.matched ? "cursor-default" : "cursor-pointer",
+        card.matched || locked ? "cursor-default" : "cursor-pointer",
       )}
       style={{ perspective: 600 }}
-      whileHover={faceUp ? undefined : { y: -2, rotate: -1.5 }}
-      whileTap={faceUp ? undefined : { scale: 0.94 }}
+      whileHover={faceUp || locked ? undefined : { y: -2, rotate: -1.5 }}
+      whileTap={faceUp || locked ? undefined : { scale: 0.94 }}
       animate={
         missed
           ? { x: [0, -4, 4, -3, 3, 0] }
@@ -261,6 +264,12 @@ export function MemoryMatch() {
   const [announce, setAnnounce] = useState("");
   /** Bumped on every deal, so a new board gets brand-new card elements. */
   const [round, setRound] = useState(0);
+  /**
+   * Setup (false): pick a board, cards are a locked face-down preview.
+   * Playing (true): board size is locked, cards can be flipped.
+   */
+  const [playing, setPlaying] = useState(false);
+  const playingRef = useRef(false);
   const gameRef = useRef(game);
   const bestsRef = useRef(bests);
   const missTimer = useRef<number | undefined>(undefined);
@@ -273,11 +282,14 @@ export function MemoryMatch() {
     setGame(next);
   }, []);
 
+  /** Back to setup with a fresh face-down board of `size`. */
   const deal = useCallback(
-    (size: BoardSize) => {
+    (size: BoardSize, say?: string) => {
       window.clearTimeout(missTimer.current);
+      playingRef.current = false;
+      setPlaying(false);
       setResult(null);
-      setAnnounce(`New ${size} by ${size} game. Find ${plural(Math.floor((size * size) / 2), "pair")}.`);
+      setAnnounce(say ?? "");
       setFocusIndex(0);
       setRound((r) => r + 1);
       commit(newGame(size, POOL));
@@ -316,8 +328,20 @@ export function MemoryMatch() {
     if (result) endRef.current?.focus();
   }, [result]);
 
+  const start = () => {
+    playingRef.current = true;
+    setPlaying(true);
+    const { size, pairsTotal } = gameRef.current;
+    setAnnounce(
+      `Game started on ${size} by ${size}. Find ${plural(pairsTotal, "pair")}.`,
+    );
+    // Keyboard players go straight to the first card.
+    buttons.current[0]?.focus();
+  };
+
   const onFlip = useCallback(
     (index: number) => {
+      if (!playingRef.current) return;
       const current = gameRef.current;
       const t = Date.now();
       const { state, outcome } = flip(current, index, t);
@@ -438,7 +462,12 @@ export function MemoryMatch() {
               filled={s === size}
               aria-pressed={s === size}
               aria-label={`${s} by ${s}`}
-              onClick={() => deal(s)}
+              // Locked mid-game; the current size stays bright so you can
+              // still see which board you're on.
+              disabled={playing && s !== size}
+              onClick={() => {
+                if (!playingRef.current && s !== size) deal(s);
+              }}
               className="[&>span]:min-h-10 [&>span]:px-2.5 [&>span]:text-lg sm:[&>span]:px-3"
             >
               {s}×{s}
@@ -449,18 +478,35 @@ export function MemoryMatch() {
           <p className="font-note text-xl text-sketch">
             {best
               ? `Best on ${size}×${size}: ${plural(best.moves, "move")} · ${formatTime(best.ms)}`
-              : `No best yet on ${size}×${size}. Flip two cards to start!`}
+              : `No best yet on ${size}×${size}.`}
+            {!playing && " Pick a board, then press Start."}
           </p>
-          <SketchButton seed="mm-new" color="blue" onClick={() => deal(size)}>
-            New game
-          </SketchButton>
+          {playing ? (
+            <SketchButton
+              seed="mm-new"
+              color="blue"
+              onClick={() =>
+                deal(size, "Game ended. Pick a board, then press Start.")
+              }
+            >
+              New game
+            </SketchButton>
+          ) : (
+            <SketchButton seed="mm-start" color="green" filled onClick={start}>
+              Start
+            </SketchButton>
+          )}
         </div>
       </div>
 
       <div className="relative w-full max-w-[36rem]">
         <div
           role="group"
-          aria-label={`Memory board, ${size} by ${size}. Use the arrow keys to move between cards and Enter to flip.`}
+          aria-label={
+            playing
+              ? `Memory board, ${size} by ${size}. Use the arrow keys to move between cards and Enter to flip.`
+              : `Memory board preview, ${size} by ${size}. Press Start to play.`
+          }
           onKeyDown={onBoardKey}
           className={cn("grid", GAP[size])}
           style={{ gridTemplateColumns: `repeat(${size}, minmax(0, 1fr))` }}
@@ -478,7 +524,8 @@ export function MemoryMatch() {
                 size={size}
                 faceUp={isFaceUp(game, i)}
                 missed={missed.includes(i)}
-                focusable={i === focusIndex}
+                focusable={playing && i === focusIndex}
+                locked={!playing}
                 onFlip={onFlip}
                 onFocus={setFocusIndex}
                 buttonRef={(el) => {
@@ -533,7 +580,9 @@ export function MemoryMatch() {
                   seed="mm-again"
                   color="green"
                   filled
-                  onClick={() => deal(size)}
+                  onClick={() =>
+                    deal(size, "Pick a board, then press Start.")
+                  }
                 >
                   Play again
                 </SketchButton>
