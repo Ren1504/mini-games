@@ -45,7 +45,7 @@ HINTS  ──last hint / timeouts──▶ DISCUSSION (150s; skip unlocks after 
 DISCUSSION ──timer, or every connected player skips──▶ VOTING (30s)
 VOTING ──timer, or every connected player locked──▶ RESULT
 RESULT ──PLAY_AGAIN (host)──▶ LOBBY ──START──▶ next round
-any round phase ──imposter gone >30s──▶ RESULT (IMPOSTER_FLED)
+any round phase ──imposter gone >10s──▶ RESULT (IMPOSTER_FLED)
 any round phase ──<3 connected──▶ RESULT (TOO_FEW_PLAYERS)
 ```
 
@@ -67,13 +67,16 @@ vote denominators.
 
 ## Privacy
 
-| Data                         | Who receives it                                  |
-| ---------------------------- | ------------------------------------------------ |
-| Secret word + category       | Each crewmate, on their own connection (`YOU`)   |
-| "IMPOSTER" + category + clue | The imposter only (`YOU`)                        |
-| Imposter id, vote targets    | Nobody until RESULT                              |
-| Session token                | Its owner only                                   |
-| Everything else (`STATE`)    | Broadcast, validated against `publicStateSchema` |
+| Data                      | Who receives it                                  |
+| ------------------------- | ------------------------------------------------ |
+| Secret word + category    | Each crewmate, on their own connection (`YOU`)   |
+| Imposter's clue           | Everyone dealt in (`YOU`), and in the RESULT     |
+| "IMPOSTER" + category     | The imposter only (`YOU`)                        |
+| Imposter id               | Nobody until RESULT                              |
+| Who voted for whom        | Nobody, ever: only per-player tallies in RESULT  |
+| Upcoming hint order       | Nobody: only whose turn it is now                |
+| Session token             | Its owner only                                   |
+| Everything else (`STATE`) | Broadcast, validated against `publicStateSchema` |
 
 `publicStateSchema` is `.strict()`: a test proves that a state containing
 the word, the imposter id, vote targets, a token or a role fails
@@ -87,14 +90,21 @@ the `/party` worker, never by Next.js code.
   per room code.
 - Reconnect = `JOIN` with the token → same seat, same role, same card. The
   imposter is never reassigned.
-- A seat survives 30 s offline. A disconnected active hinter is skipped
-  immediately. A disconnected imposter past 30 s ends the round
-  (IMPOSTER_FLED). Host passes to the longest-connected player.
+- A dropped player shows as "reconnecting…" and keeps their seat for 10 s
+  (`RECONNECT_GRACE_MS`). After that they have left: in the lobby the seat
+  is released; mid-round they are marked `left`, their vote is dropped,
+  nobody can vote for them and their token can't reclaim the seat until the
+  next lobby. Clients show "Ann left".
+- A disconnected active hinter is skipped immediately. An imposter gone
+  past the grace period ends the round (IMPOSTER_FLED); fewer than 3
+  players left ends it as TOO_FEW_PLAYERS. Otherwise the round continues.
+- A host gone past the grace period hands host to the earliest-joined
+  player still here ("You're the host now").
 - Two tabs: the newest connection takes the seat and the old one gets
   `ERROR REPLACED`.
 - Joining is only possible in the lobby. Opening an invite link mid-round
   shows "game already in progress" (`ERROR IN_PROGRESS`). Players reclaiming
-  their own seat with their token can always come back.
+  their own seat with their token can come back within the grace period.
 
 ## Validation and abuse
 

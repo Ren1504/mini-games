@@ -139,7 +139,7 @@ Everything tunable is in [`src/shared/config.ts`](../../src/shared/config.ts):
 | `TIMINGS.DISCUSSION_MS`                    | 150 s    | Talking it over                         |
 | `TIMINGS.SKIP_UNLOCK_MS`                   | 30 s     | "Skip to voting" stays locked this long |
 | `TIMINGS.VOTE_MS`                          | 30 s     | Voting                                  |
-| `TIMINGS.RECONNECT_GRACE_MS`               | 30 s     | A dropped player keeps their seat       |
+| `TIMINGS.RECONNECT_GRACE_MS`               | 10 s     | "Reconnecting…", then the player left   |
 | `TIMINGS.EMPTY_ROOM_TTL_MS`                | 10 min   | Empty rooms are wiped after this        |
 | `LIMITS.MIN_PLAYERS` / `MAX_PLAYERS`       | 3 / 10   | Room size                               |
 | `LIMITS.HINT_MAX_WORDS` / `HINT_MAX_CHARS` | 3 / 30   | Hint length                             |
