@@ -3,7 +3,6 @@
 import { motion } from "motion/react";
 import { useEffect, useState } from "react";
 import { useSound } from "@/components/fx/Sound";
-import { StickyNote } from "@/components/paper/StickyNote";
 import { DoodleAvatar } from "@/components/sketch/DoodleAvatar";
 import { DoodleIcon } from "@/components/sketch/DoodleIcon";
 import { RCircle } from "@/components/sketch/Rough";
@@ -12,7 +11,6 @@ import { cn } from "@/lib/cn";
 import { duration, spring, strokeEase } from "@/lib/motion";
 import { crayon, ink } from "@/lib/palette";
 import type { PublicPlayer, PublicState } from "@/shared/protocol";
-import type { ConnectionStatus } from "../useImposterRoom";
 
 // ── Timer ring ──────────────────────────────────────────────────────
 
@@ -94,103 +92,6 @@ export function TimerRing({
         {seconds}
       </span>
     </motion.div>
-  );
-}
-
-// ── Connection status ───────────────────────────────────────────────
-
-const STATUS_TEXT: Record<ConnectionStatus, string> = {
-  connecting: "Connecting…",
-  connected: "Connected",
-  reconnecting: "Reconnecting…",
-  offline: "Offline",
-};
-
-/** Tiny doodle: green dot (connected), wobbling orange (reconnecting), red (offline). */
-export function ConnectionDot({ status }: { status: ConnectionStatus }) {
-  const reduced = useReducedMotionSafe();
-  const color =
-    status === "connected"
-      ? crayon.green
-      : status === "offline"
-        ? crayon.red
-        : crayon.orange;
-  return (
-    <span
-      className="inline-flex items-center gap-1.5 text-lg"
-      role="status"
-      aria-live="polite"
-    >
-      <motion.svg
-        viewBox="0 0 20 20"
-        width={18}
-        height={18}
-        aria-hidden="true"
-        animate={
-          status === "reconnecting" && !reduced
-            ? { rotate: 360 }
-            : { rotate: 0 }
-        }
-        transition={
-          status === "reconnecting"
-            ? { duration: 1.2, repeat: Infinity, ease: "linear" }
-            : { duration: 0 }
-        }
-      >
-        <RCircle
-          cx={10}
-          cy={10}
-          d={14}
-          seed={710}
-          fill={color}
-          fillStyle="solid"
-          strokeWidth={1.4}
-        />
-      </motion.svg>
-      <span className={status === "connected" ? "sr-only sm:not-sr-only" : ""}>
-        {STATUS_TEXT[status]}
-      </span>
-    </span>
-  );
-}
-
-// ── Room code note ──────────────────────────────────────────────────
-
-/** Room code on a sticky note, with a "copy invite link" doodle button. */
-export function RoomCodeNote({ code }: { code: string }) {
-  const [copied, setCopied] = useState(false);
-  const copy = async () => {
-    const url = `${window.location.origin}/games/imposter/room/${code}`;
-    try {
-      await navigator.clipboard.writeText(url);
-      setCopied(true);
-      window.setTimeout(() => setCopied(false), 1800);
-    } catch {
-      window.prompt("Copy this invite link:", url);
-    }
-  };
-  return (
-    <StickyNote rotate={-2} className="w-fit">
-      <div className="-mx-2 -my-3 flex items-center gap-3">
-        <div className="flex flex-col leading-none">
-          <span className="font-note text-lg">room code</span>
-          <span
-            className="font-code text-3xl font-bold tracking-[0.15em]"
-            aria-label={`Room code ${code.split("").join(" ")}`}
-          >
-            {code}
-          </span>
-        </div>
-        <button
-          type="button"
-          onClick={copy}
-          className="flex min-h-11 items-center gap-1 rounded px-1 font-hand text-lg underline decoration-wavy underline-offset-4"
-        >
-          <DoodleIcon name={copied ? "check" : "link"} size={20} />
-          {copied ? "copied!" : "copy invite"}
-        </button>
-      </div>
-    </StickyNote>
   );
 }
 

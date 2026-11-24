@@ -14,7 +14,7 @@ import {
   saveIdentity,
   type Identity,
 } from "./identity";
-import { IdentityForm } from "./ui/IdentityForm";
+import { IdentityForm } from "@/components/room/IdentityForm";
 
 const noop = () => () => {};
 
@@ -92,6 +92,7 @@ export function ImposterHostJoin() {
             mode={mode}
             initial={remembered}
             submitLabel={mode === "host" ? "Create room ▶" : "Join ▶"}
+            withMaxPlayers
             onSubmit={go}
           />
         </motion.div>

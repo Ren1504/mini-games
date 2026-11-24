@@ -3,16 +3,19 @@
 import { AnimatePresence, motion } from "motion/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
+import { ConnectionDot } from "@/components/room/ConnectionDot";
+import { RoomCodeNote } from "@/components/room/RoomCodeNote";
 import {
-  useEffect,
-  useMemo,
-  useState,
-  useSyncExternalStore,
-  type ReactNode,
-} from "react";
+  Centered,
+  Joining,
+  JoinHeading,
+  Loading,
+  Toast,
+  type Notice,
+} from "@/components/room/RoomScreens";
 import { HandLettered } from "@/components/sketch/HandLettered";
 import { SketchButton } from "@/components/sketch/SketchButton";
-import { cn } from "@/lib/cn";
 import { useReducedMotionSafe } from "@/hooks/useReducedMotionSafe";
 import { duration, spring } from "@/lib/motion";
 import { TIMINGS } from "@/shared/config";
@@ -20,13 +23,15 @@ import type { Phase } from "@/shared/model";
 import type { PublicState } from "@/shared/protocol";
 import {
   generateRoomCode,
+  IDENTITY_EVENT,
   lastMeRaw,
+  readIdentityRaw,
   parseMe,
   loadIdentity,
   saveIdentity,
   type Identity,
 } from "../identity";
-import { IdentityForm } from "../ui/IdentityForm";
+import { IdentityForm } from "@/components/room/IdentityForm";
 import {
   useCountdown,
   useImposterRoom,
@@ -40,25 +45,8 @@ import {
   RevealPanel,
   VotingPanel,
 } from "./panels";
-import {
-  ConnectionDot,
-  PlayerBoard,
-  RoomCodeNote,
-  TimerRing,
-  type PlayerMark,
-} from "./parts";
+import { PlayerBoard, TimerRing, type PlayerMark } from "./parts";
 
-const IDENTITY_EVENT = "doodle-arcade:imposter:identity";
-const storageKey = (code: string) => `doodle-arcade:imposter:room:${code}`;
-
-/** Raw identity string: a stable snapshot for useSyncExternalStore. */
-function readRaw(code: string): string | null {
-  try {
-    return window.localStorage.getItem(storageKey(code));
-  } catch {
-    return null;
-  }
-}
 function subscribe(onChange: () => void) {
   window.addEventListener(IDENTITY_EVENT, onChange);
   window.addEventListener("storage", onChange);
@@ -101,7 +89,7 @@ export function ImposterRoom({ code }: { code: string }) {
   );
   const raw = useSyncExternalStore(
     subscribe,
-    () => readRaw(code),
+    () => readIdentityRaw(code),
     () => null,
   );
   const identity = useMemo<Identity | null>(
@@ -283,7 +271,7 @@ function RoomView({
         Imposter, room {code}: {PHASE_NAME[state.phase]}
       </h1>
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <RoomCodeNote code={code} />
+        <RoomCodeNote code={code} roomPath="/games/imposter/room" />
         <div className="flex items-center gap-4">
           <ConnectionDot status={status} />
           {remaining !== null && total && (
@@ -332,8 +320,6 @@ function RoomView({
   );
 }
 
-type Notice = { message: string; at: number };
-
 /**
  * "Ann left" once a player's reconnect grace runs out, and "Bob is now
  * the host" when host passes on. Derived by comparing each new state with
@@ -371,139 +357,4 @@ function useRoomNotices(state: PublicState, youId: string): Notice | null {
       setNotice({ message: messages.join(" · "), at: state.version });
   }
   return notice;
-}
-
-/** A sticky note at the bottom for 4s: rejected actions, or room notices. */
-function Toast({
-  item,
-  role,
-  className,
-}: {
-  item: Notice | RoomError | null;
-  role: "alert" | "status";
-  className?: string;
-}) {
-  const [visible, setVisible] = useState<Notice | null>(null);
-  const [lastShown, setLastShown] = useState<number | null>(null);
-  if (item && item.at !== lastShown) {
-    setLastShown(item.at);
-    setVisible(item);
-  }
-  useEffect(() => {
-    if (!visible) return;
-    const t = window.setTimeout(() => setVisible(null), 4000);
-    return () => window.clearTimeout(t);
-  }, [visible]);
-  return (
-    <div
-      role={role}
-      aria-live={role === "alert" ? "assertive" : "polite"}
-      className={cn(
-        "pointer-events-none fixed inset-x-0 bottom-6 z-40 flex justify-center px-4",
-        className,
-      )}
-    >
-      <AnimatePresence>
-        {visible && (
-          <motion.p
-            key={visible.at}
-            className="sticky-note px-5 py-3 font-hand text-xl text-[#2b2b2b]"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 20 }}
-          >
-            {visible.message}
-          </motion.p>
-        )}
-      </AnimatePresence>
-    </div>
-  );
-}
-
-function Centered({ children }: { children: ReactNode }) {
-  return (
-    <div className="flex flex-col items-center gap-6 py-6 text-center">
-      {children}
-    </div>
-  );
-}
-
-/** How long to wait before saying the game server can't be reached. */
-const UNREACHABLE_AFTER_MS = 6000;
-
-/**
- * "Joining the room…", but if nothing arrives within a few seconds and
- * the socket isn't connected, say so plainly instead of spinning forever.
- */
-function Joining({
-  status,
-}: {
-  status: ReturnType<typeof useImposterRoom>["status"];
-}) {
-  const [slow, setSlow] = useState(false);
-  useEffect(() => {
-    const t = window.setTimeout(() => setSlow(true), UNREACHABLE_AFTER_MS);
-    return () => window.clearTimeout(t);
-  }, []);
-
-  if (!slow) return <Loading text="Joining the room…" />;
-  if (status === "connected") return <Loading text="Still joining…" />;
-  return (
-    <Centered>
-      <HandLettered
-        as="h1"
-        text="Can't reach the game server"
-        seed="unreachable"
-        className="font-hand text-4xl sm:text-5xl"
-      />
-      <p className="max-w-md text-xl" role="alert">
-        {status === "offline"
-          ? "You seem to be offline. Check your internet connection."
-          : "The game server isn't answering. It keeps retrying in the background."}
-      </p>
-      <p className="max-w-md font-note text-xl text-sketch">
-        Running it on your own computer? Make sure <code>npm run dev:all</code>{" "}
-        is running (it starts the game server on port 1999).
-      </p>
-      <SketchButton
-        seed="unreachable-retry"
-        filled
-        color="blue"
-        onClick={() => window.location.reload()}
-      >
-        Try again
-      </SketchButton>
-    </Centered>
-  );
-}
-
-/** "Join room" in hand lettering, the code itself in the clear code font. */
-function JoinHeading({ code }: { code: string }) {
-  return (
-    <h1 className="flex flex-col items-center gap-2">
-      <HandLettered
-        as="span"
-        text="Join room"
-        seed="join-room"
-        className="font-hand text-5xl"
-      />
-      <span
-        className="font-code text-4xl font-bold tracking-[0.15em] text-graphite"
-        aria-label={code.split("").join(" ")}
-      >
-        {code}
-      </span>
-    </h1>
-  );
-}
-
-function Loading({ text }: { text: string }) {
-  return (
-    <p
-      role="status"
-      className="py-24 text-center font-note text-3xl text-sketch"
-    >
-      {text}
-    </p>
-  );
 }

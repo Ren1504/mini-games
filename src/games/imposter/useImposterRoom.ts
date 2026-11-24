@@ -13,8 +13,9 @@ import {
 } from "@/shared/protocol";
 import { PARTY_HOST, saveToken, type Identity } from "./identity";
 
-export type ConnectionStatus =
-  "connecting" | "connected" | "reconnecting" | "offline";
+import type { ConnectionStatus } from "@/components/room/ConnectionDot";
+
+export type { ConnectionStatus };
 
 /** Errors that mean "you couldn't get a seat" (shown on the join screen). */
 const JOIN_ERRORS: ReadonlySet<ErrorCode> = new Set([

@@ -24,7 +24,7 @@ import {
 import { HintsNotebook, playerMap } from "./parts";
 import { DoodleConfetti, SneakOff, TearAway } from "./ResultEffects";
 import { saveAvatarPreference } from "../identity";
-import { AvatarPicker } from "../ui/AvatarPicker";
+import { AvatarPicker } from "@/components/room/AvatarPicker";
 import { SecretCard } from "./SecretCard";
 
 type PanelProps = {

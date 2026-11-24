@@ -10,7 +10,7 @@ import {
   type AvatarId,
 } from "@/shared/config";
 import { nameSchema, roomCodeSchema } from "@/shared/protocol";
-import type { Identity } from "../identity";
+import type { Identity } from "./identity";
 
 type Props = {
   mode: "host" | "join";
@@ -21,13 +21,15 @@ type Props = {
   /** Server-side problem to show (name taken, room full, …). */
   error?: string | null;
   submitLabel: string;
+  /** Hosts pick the room size (Imposter). */
+  withMaxPlayers?: boolean;
   onSubmit: (identity: Identity, code: string | null) => void;
 };
 
 const codeFilter = new RegExp(`[^${ROOM_CODE_ALPHABET}]`, "g");
 
 /**
- * Name (+ max players for hosts, + room code for joiners). Doodles are
+ * Name (+ max players for Imposter hosts, + room code for joiners). Doodles are
  * picked in the lobby; the last one used is sent along as a preference.
  */
 export function IdentityForm({
@@ -36,6 +38,7 @@ export function IdentityForm({
   initial,
   error,
   submitLabel,
+  withMaxPlayers = false,
   onSubmit,
 }: Props) {
   const ids = useId();
@@ -63,7 +66,7 @@ export function IdentityForm({
         name: nameCheck.data,
         mode,
         ...(initial?.avatar ? { avatar: initial.avatar } : {}),
-        ...(mode === "host" ? { maxPlayers } : {}),
+        ...(mode === "host" && withMaxPlayers ? { maxPlayers } : {}),
       },
       fixedCode ?? (codeCheck?.success ? codeCheck.data : null),
     );
@@ -145,7 +148,7 @@ export function IdentityForm({
         )}
       </div>
 
-      {mode === "host" && (
+      {mode === "host" && withMaxPlayers && (
         <div className="flex flex-wrap items-center gap-4">
           <span id={`${ids}-max`} className="font-hand text-2xl">
             Max players
