@@ -1,5 +1,7 @@
 "use client";
 
+import { isPlayable } from "@/games/playable";
+import { WipTape } from "./WipTape";
 import { motion } from "motion/react";
 import Link from "next/link";
 import { useState } from "react";
@@ -94,6 +96,7 @@ export function FeaturedGame() {
             boil={hovered}
             className="grid gap-6 p-5 pt-8 sm:p-8 md:grid-cols-[1.15fr_1fr] md:items-center"
           >
+            {!isPlayable(game.slug) && <WipTape size="lg" />}
             <SketchBox
               seed="featured-thumb"
               fill={crayon.yellow}
@@ -129,6 +132,9 @@ export function FeaturedGame() {
                     className="outline-none"
                   >
                     <HandLettered text={game.title} seed="featured-title" />
+                    {!isPlayable(game.slug) && (
+                      <span className="sr-only"> (work in progress)</span>
+                    )}
                   </Link>
                 </h2>
                 <FavoriteButton slug={game.slug} title={game.title} size={38} />

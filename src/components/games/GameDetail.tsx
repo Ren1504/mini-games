@@ -1,5 +1,7 @@
 "use client";
 
+import { isPlayable } from "@/games/playable";
+import { WipTape } from "./WipTape";
 import Link from "next/link";
 import { useState } from "react";
 import { DoodleIcon } from "@/components/sketch/DoodleIcon";
@@ -77,6 +79,7 @@ export function GameDetail({
           onPointerEnter={() => setHovered(true)}
           onPointerLeave={() => setHovered(false)}
         >
+          {!isPlayable(game.slug) && <WipTape size="lg" />}
           <GameThumbnail
             name={game.thumbnail}
             state={hovered ? "hover" : "shown"}
@@ -105,6 +108,11 @@ export function GameDetail({
           <FavoriteButton slug={game.slug} title={game.title} size={38} />
         </div>
         <p className="text-xl">{game.description}</p>
+        {!isPlayable(game.slug) && (
+          <p className="font-note text-2xl text-sketch">
+            Work in progress: this game isn&apos;t playable yet.
+          </p>
+        )}
 
         <section aria-labelledby={`${titleId}-how`}>
           <h3 id={`${titleId}-how`} className="font-note text-3xl font-bold">

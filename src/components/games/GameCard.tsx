@@ -1,5 +1,7 @@
 "use client";
 
+import { isPlayable } from "@/games/playable";
+import { WipTape } from "./WipTape";
 import { motion, useInView } from "motion/react";
 import Link from "next/link";
 import { useRef, useState, type Ref } from "react";
@@ -52,6 +54,7 @@ export const cardTilt = (slug: string) =>
  */
 export function GameCard({ game, index, columns, ref }: Props) {
   const reduced = useReducedMotionSafe();
+  const wip = !isPlayable(game.slug);
   const { open: modalOpen, setOrigin } = useModalState();
   const { rustle } = useSound();
   const own = useRef<HTMLLIElement>(null);
@@ -126,6 +129,7 @@ export function GameCard({ game, index, columns, ref }: Props) {
             shadow={active ? "lifted" : "rest"}
             className="flex flex-col gap-3 px-4 pt-6 pb-4"
           >
+            {wip && <WipTape />}
             <div className="aspect-[16/11] w-full">
               {near && (
                 <GameThumbnail name={game.thumbnail} className="size-full" />
@@ -146,6 +150,7 @@ export function GameCard({ game, index, columns, ref }: Props) {
                   className="outline-none after:absolute after:inset-0 after:content-['']"
                 >
                   {game.title}
+                  {wip && <span className="sr-only"> (work in progress)</span>}
                 </Link>
               </h3>
               <FavoriteButton
