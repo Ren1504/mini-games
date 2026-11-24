@@ -28,6 +28,10 @@ export const gameLoaders: Record<string, ComponentType> = {
     () => import("./imposter/ImposterHostJoin").then((m) => m.ImposterHostJoin),
     { loading: Loading },
   ),
+  "memory-match": dynamic(
+    () => import("./memory-match/MemoryMatch").then((m) => m.MemoryMatch),
+    { loading: Loading },
+  ),
 };
 
 export function GameLoader({ slug }: { slug: string }) {
