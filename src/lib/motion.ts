@@ -82,6 +82,24 @@ export const sound = {
   tickHz: 1400,
   tickLength: 0.035,
   tickVolume: 0.12,
+  /** Generated notes (Hz, seconds from now, length in seconds). */
+  chime: {
+    notes: [
+      [1046.5, 0, 0.22], // C6
+      [1568, 0.09, 0.32], // G6
+    ],
+    volume: 0.16,
+  },
+  bonk: { fromHz: 240, toHz: 120, length: 0.16, volume: 0.2 },
+  fanfare: {
+    notes: [
+      [523.25, 0.3, 0.14], // C5
+      [659.25, 0.42, 0.14], // E5
+      [783.99, 0.54, 0.14], // G5
+      [1046.5, 0.66, 0.5], // C6
+    ],
+    volume: 0.14,
+  },
 } as const;
 
 // ── Effects ─────────────────────────────────────────────────────────

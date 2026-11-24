@@ -275,7 +275,7 @@ export function MemoryMatch() {
   const missTimer = useRef<number | undefined>(undefined);
   const buttons = useRef<(HTMLButtonElement | null)[]>([]);
   const endRef = useRef<HTMLDivElement>(null);
-  const { tick, rustle } = useSound();
+  const { tick, chime, bonk, fanfare } = useSound();
 
   const commit = useCallback((next: GameState) => {
     gameRef.current = next;
@@ -356,15 +356,16 @@ export function MemoryMatch() {
         tick();
         setAnnounce(name(index));
       } else if (outcome === "miss") {
-        tick();
+        bonk();
         const [a, b] = state.open;
         setAnnounce(`${name(b)}. No match with ${name(a)}.`);
         missTimer.current = window.setTimeout(() => {
           commit(hideMismatch(gameRef.current));
         }, MISS_MS);
       } else {
-        rustle();
+        chime();
         if (state.finishedAt !== null) {
+          fanfare();
           const ms = elapsedMs(state, t);
           const r = recordBest(bestsRef.current, state.size, {
             moves: state.moves,
@@ -384,7 +385,7 @@ export function MemoryMatch() {
         }
       }
     },
-    [commit, rustle, tick],
+    [bonk, chime, commit, fanfare, tick],
   );
 
   // Arrow keys move between cards (one tab stop for the whole board).

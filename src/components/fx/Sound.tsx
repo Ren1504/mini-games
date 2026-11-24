@@ -23,6 +23,12 @@ type SoundApi = {
   rustle: () => void;
   /** Soft countdown tick, generated in the browser (no-op when muted). */
   tick: () => void;
+  /** Bright rising two-note "ding-ding" (e.g. a matched pair). */
+  chime: () => void;
+  /** Low soft "bonk" (e.g. a missed pair). */
+  bonk: () => void;
+  /** Short happy arpeggio for a win; starts just after a chime. */
+  fanfare: () => void;
 };
 
 const SoundContext = createContext<SoundApi>({
@@ -30,6 +36,9 @@ const SoundContext = createContext<SoundApi>({
   toggle: () => {},
   rustle: () => {},
   tick: () => {},
+  chime: () => {},
+  bonk: () => {},
+  fanfare: () => {},
 });
 
 function readEnabled(): boolean {
@@ -147,6 +156,68 @@ export function SoundProvider({ children }: { children: ReactNode }) {
     osc.stop(now + sound.tickLength + 0.01);
   }, [context]);
 
+  /**
+   * One xylophone-ish note: a triangle wave with a quiet sine an octave
+   * up, a 5ms attack and an exponential fade.
+   */
+  const note = useCallback(
+    (hz: number, at: number, length: number, volume: number) => {
+      const ctx = context();
+      if (ctx.state === "suspended") void ctx.resume();
+      const t = ctx.currentTime + at;
+      const gain = ctx.createGain();
+      gain.gain.setValueAtTime(0.0001, t);
+      gain.gain.linearRampToValueAtTime(volume, t + 0.005);
+      gain.gain.exponentialRampToValueAtTime(0.0001, t + length);
+      gain.connect(ctx.destination);
+      for (const [type, mult, level] of [
+        ["triangle", 1, 1],
+        ["sine", 2, 0.25],
+      ] as const) {
+        const osc = ctx.createOscillator();
+        osc.type = type;
+        osc.frequency.setValueAtTime(hz * mult, t);
+        const g = ctx.createGain();
+        g.gain.value = level;
+        osc.connect(g).connect(gain);
+        osc.start(t);
+        osc.stop(t + length + 0.02);
+      }
+    },
+    [context],
+  );
+
+  const chime = useCallback(() => {
+    if (!readEnabled()) return;
+    for (const [hz, at, len] of sound.chime.notes)
+      note(hz, at, len, sound.chime.volume);
+  }, [note]);
+
+  const fanfare = useCallback(() => {
+    if (!readEnabled()) return;
+    for (const [hz, at, len] of sound.fanfare.notes)
+      note(hz, at, len, sound.fanfare.volume);
+  }, [note]);
+
+  const bonk = useCallback(() => {
+    if (!readEnabled()) return;
+    const ctx = context();
+    if (ctx.state === "suspended") void ctx.resume();
+    const now = ctx.currentTime;
+    const { fromHz, toHz, length, volume } = sound.bonk;
+    const osc = ctx.createOscillator();
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(fromHz, now);
+    osc.frequency.exponentialRampToValueAtTime(toHz, now + length);
+    const gain = ctx.createGain();
+    gain.gain.setValueAtTime(0.0001, now);
+    gain.gain.linearRampToValueAtTime(volume, now + 0.008);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + length);
+    osc.connect(gain).connect(ctx.destination);
+    osc.start(now);
+    osc.stop(now + length + 0.02);
+  }, [context]);
+
   const rustle = useCallback(() => {
     if (readEnabled()) void play(false);
   }, [play]);
@@ -163,8 +234,8 @@ export function SoundProvider({ children }: { children: ReactNode }) {
   }, [play]);
 
   const api = useMemo(
-    () => ({ enabled, toggle, rustle, tick }),
-    [enabled, toggle, rustle, tick],
+    () => ({ enabled, toggle, rustle, tick, chime, bonk, fanfare }),
+    [enabled, toggle, rustle, tick, chime, bonk, fanfare],
   );
   return <SoundContext.Provider value={api}>{children}</SoundContext.Provider>;
 }
