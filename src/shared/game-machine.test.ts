@@ -686,3 +686,27 @@ describe("privacy", () => {
     expect(hintRevealsWord("cold sea", "Titanic")).toBe(false);
   });
 });
+
+describe("closing an empty room", () => {
+  it("closes once everyone is gone, and the code can't be joined or revived", () => {
+    const { r } = started(3);
+    for (const p of r.state.players) r.drop(p.id);
+    expect(r.state.hosted).toBe(true); // still inside the reconnect window
+    r.advance(TIMINGS.RECONNECT_GRACE_MS);
+    expect(r.state.hosted).toBe(false);
+    expect(r.effects.at(-1)).toEqual({ type: "CLEANUP" });
+    expect(r.errorOf(r.join("Late"))).toBe("ROOM_NOT_FOUND");
+    // The old host's browser (it still has its token) can't reopen it.
+    expect(r.errorOf(r.join("Host", "host", `token-1-${"x".repeat(16)}`))).toBe(
+      "ROOM_NOT_FOUND",
+    );
+  });
+
+  it("stays open while someone is still here", () => {
+    const { r } = started(3);
+    r.drop("p1");
+    r.drop("p2");
+    r.advance(TIMINGS.RECONNECT_GRACE_MS);
+    expect(r.state.hosted).toBe(true);
+  });
+});

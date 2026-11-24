@@ -82,6 +82,14 @@ export function roomIdentity(game: RoomGame) {
         return null;
       }
     },
+    /** Forget this room (after leaving it), so the page won't rejoin. */
+    forget(code: string) {
+      try {
+        window.localStorage.removeItem(storageKey(code));
+      } catch {
+        // Storage blocked: nothing was saved anyway.
+      }
+    },
     saveToken(code: string, token: string) {
       const id = load(code);
       if (id && id.token !== token) write(storageKey(code), { ...id, token });

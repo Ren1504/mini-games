@@ -192,7 +192,9 @@ export function ImposterRoom({ code }: { code: string }) {
           className="font-hand text-5xl"
         />
         <p className="max-w-md text-xl" role="alert">
-          {JOIN_ERROR_TEXT[joinError.code]}
+          {joinError.message === "This room has closed."
+            ? "This room has closed: everyone left. Host a new room to play again."
+            : JOIN_ERROR_TEXT[joinError.code]}
         </p>
         <div className="flex flex-wrap justify-center gap-4">
           <SketchButton

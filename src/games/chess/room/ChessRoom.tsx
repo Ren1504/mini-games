@@ -195,7 +195,9 @@ export function ChessRoom({ code }: { code: string }) {
           className="font-hand text-5xl"
         />
         <p className="max-w-md text-xl" role="alert">
-          {JOIN_ERROR_TEXT[joinError.code]}
+          {joinError.message === "This room has closed."
+            ? "This room has closed: both players left. Host a new room to play again."
+            : JOIN_ERROR_TEXT[joinError.code]}
         </p>
         <div className="flex flex-wrap justify-center gap-4">
           <SketchButton
@@ -239,7 +241,18 @@ function RoomView({ room, state, you }: ViewProps) {
       </h1>
       <div className="flex flex-wrap items-center justify-between gap-4">
         <RoomCodeNote code={state.code} roomPath={ROOM_PATH} />
-        <ConnectionDot status={room.status} />
+        <div className="flex items-center gap-4">
+          <ConnectionDot status={room.status} />
+          <LeaveButton
+            code={state.code}
+            inGame={Boolean(
+              playing &&
+              (state.game!.whiteId === you.playerId ||
+                state.game!.blackId === you.playerId),
+            )}
+            send={room.send}
+          />
+        </div>
       </div>
       <AnimatePresence mode="wait">
         <motion.div
@@ -270,6 +283,46 @@ function RoomView({ room, state, you }: ViewProps) {
       <Toast item={nudge} role="status" className="bottom-24" />
       <Toast item={notice} role="status" className="bottom-24" />
     </div>
+  );
+}
+
+/**
+ * Gives up your seat for good and goes back to the Chess page. Mid-game it
+ * loses the game, so it asks for a second tap first.
+ */
+function LeaveButton({
+  code,
+  inGame,
+  send,
+}: {
+  code: string;
+  inGame: boolean;
+  send: (m: ChessClientMessage) => void;
+}) {
+  const router = useRouter();
+  const [confirm, setConfirm] = useState(false);
+  useEffect(() => {
+    if (!confirm) return;
+    const t = window.setTimeout(() => setConfirm(false), 4000);
+    return () => window.clearTimeout(t);
+  }, [confirm]);
+  const leave = () => {
+    send({ type: "LEAVE" });
+    chessIdentity.forget(code);
+    router.push("/games/chess/play");
+  };
+  return (
+    <SketchButton
+      seed="chess-leave"
+      color="red"
+      filled={confirm}
+      onClick={() => {
+        if (inGame && !confirm) setConfirm(true);
+        else leave();
+      }}
+    >
+      {confirm ? "Leave and lose? Tap again" : "Leave room"}
+    </SketchButton>
   );
 }
 
@@ -347,7 +400,7 @@ function Lobby({ room, state, you }: ViewProps) {
                 </span>
               )}
             </p>
-            <div className="mx-auto w-full max-w-md">
+            <div className="mx-auto w-full max-w-lg">
               <Board
                 moves={result.moves}
                 bottom={myResultColor ?? "w"}
@@ -561,8 +614,11 @@ function GameView({
       : `${opponentName} is thinking…`;
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[minmax(0,36rem)_1fr]">
-      <div className="flex flex-col gap-2">
+    // The board is as big as the screen allows: full width on phones, and
+    // on big screens up to 48rem, but never taller than the window minus
+    // room for the two player cards (so it all fits without scrolling).
+    <div className="grid gap-6 lg:grid-cols-[minmax(0,min(48rem,calc(100svh-9rem)))_minmax(15rem,1fr)]">
+      <div className="mx-auto flex w-full max-w-[min(48rem,calc(100svh-9rem))] flex-col gap-2 lg:max-w-none">
         {card(top)}
         <Board
           moves={moves}

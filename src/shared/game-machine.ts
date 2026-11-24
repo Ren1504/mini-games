@@ -348,6 +348,13 @@ export function reduce(
         break;
       }
 
+      // A token that matches no seat means this browser was in the room
+      // before. If the room has closed since, it stays closed: the code
+      // can't be brought back to life, not even by its old host.
+      if (message.token && !s.hosted) {
+        return fail(connId, "ROOM_NOT_FOUND", "This room has closed.");
+      }
+
       if (message.mode === "host") {
         const occupied = s.hosted && s.players.some((p) => present(p, ctx.now));
         if (occupied) {
@@ -657,6 +664,15 @@ export function reduce(
   // Idempotent housekeeping after every event.
   checkPresence(s, ctx);
   ensureHost(s, ctx.now);
+
+  // Everyone has gone (left, or away past the reconnect window): the room
+  // stops existing, so its code can't be joined any more.
+  if (s.hosted && !s.players.some((p) => present(p, ctx.now))) {
+    return {
+      state: { ...initialState(s.code), version: prev.version + 1 },
+      effects: [...effects, { type: "CLEANUP" }],
+    };
+  }
 
   const changed =
     JSON.stringify({ ...s, version: 0 }) !==

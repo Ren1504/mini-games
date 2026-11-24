@@ -22,7 +22,7 @@ async function Room({ params }: { params: Promise<{ code: string }> }) {
   return (
     <TornEdge
       seed={`chess-room-${code}`}
-      paperClassName="px-3 pt-12 pb-10 sm:px-8"
+      paperClassName="px-2 pt-12 pb-10 sm:px-8"
     >
       <ChessRoom code={parsed.data} />
     </TornEdge>

@@ -286,6 +286,13 @@ export function reduceChess(
         break;
       }
 
+      // A token that matches no seat means this browser was in the room
+      // before. If the room has closed since, it stays closed: the code
+      // can't be brought back to life, not even by its old host.
+      if (message.token && !s.hosted) {
+        return fail(connId, "ROOM_NOT_FOUND", "This room has closed.");
+      }
+
       if (message.mode === "host") {
         const occupied = s.hosted && s.players.some((p) => present(p, ctx.now));
         if (occupied) {
@@ -423,6 +430,13 @@ export function reduceChess(
           break;
         }
 
+        case "LEAVE": {
+          // Leaving mid-game loses it, like walking away from the board.
+          if (game && myColor) finish(s, "ABANDONED", other(myColor));
+          s.players = s.players.filter((p) => p.id !== me.id);
+          break;
+        }
+
         case "RESIGN": {
           if (!game || !myColor)
             return fail(connId, "WRONG_PHASE", "No game in progress.");
@@ -484,6 +498,15 @@ export function reduceChess(
   // Idempotent housekeeping after every event.
   releaseExpiredSeats(s, ctx.now);
   ensureHost(s, ctx.now);
+
+  // Everyone has gone (left, or away past the reconnect window): the room
+  // stops existing, so its code can't be joined any more.
+  if (s.hosted && s.players.length === 0) {
+    return {
+      state: { ...initialChessState(s.code), version: prev.version + 1 },
+      effects: [...effects, { type: "CLEANUP" }],
+    };
+  }
 
   const changed =
     JSON.stringify({ ...s, version: 0 }) !==

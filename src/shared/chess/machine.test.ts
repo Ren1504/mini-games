@@ -289,3 +289,50 @@ describe("leaving", () => {
     expect(r.s.hosted).toBe(false);
   });
 });
+
+describe("closing the room", () => {
+  it("closes once both players are gone; the code is dead after that", () => {
+    const r = room().started();
+    r.drop("ann");
+    r.drop("bob");
+    r.advance(CHESS_TIMINGS.RECONNECT_GRACE_MS);
+    expect(r.s.hosted).toBe(false);
+    expect(r.last.effects.at(-1)).toEqual({ type: "CLEANUP" });
+    expect(errorCode(r.join("cid", "Cid"))).toBe("ROOM_NOT_FOUND");
+    expect(
+      errorCode(r.join("ann2", "Ann", "host", "ann-token-0123456789abcdef")),
+    ).toBe("ROOM_NOT_FOUND");
+  });
+
+  it("a refresh inside the reconnect window keeps the room", () => {
+    const r = room().started();
+    r.drop("ann");
+    r.drop("bob");
+    r.advance(10_000);
+    r.join("ann2", "Ann", "host", "ann-token-0123456789abcdef");
+    r.advance(CHESS_TIMINGS.RECONNECT_GRACE_MS);
+    expect(r.s.hosted).toBe(true);
+    expect(r.s.players.map((p) => p.id)).toEqual(["ann"]);
+  });
+
+  it("leaving mid-game loses it and frees the seat", () => {
+    const r = room().started();
+    const black = r.black();
+    r.act(black, { type: "LEAVE" });
+    expect(r.s.result).toMatchObject({ outcome: "ABANDONED", winner: "w" });
+    expect(r.s.players.map((p) => p.id)).not.toContain(black);
+    expect(r.s.hosted).toBe(true);
+  });
+
+  it("the last one to leave closes the room right away", () => {
+    const r = room();
+    r.join("ann", "Ann", "host");
+    r.join("bob", "Bob");
+    r.act("bob", { type: "LEAVE" });
+    expect(r.s.hostId).toBe("ann");
+    r.act("ann", { type: "LEAVE" });
+    expect(r.s.hosted).toBe(false);
+    expect(r.last.effects).toEqual([{ type: "CLEANUP" }]);
+    expect(errorCode(r.join("bob", "Bob"))).toBe("ROOM_NOT_FOUND");
+  });
+});

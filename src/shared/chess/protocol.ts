@@ -46,6 +46,8 @@ export const chessClientMessageSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("START") }).strict(),
   z.object({ type: z.literal("MOVE"), uci: uciSchema }).strict(),
   z.object({ type: z.literal("RESIGN") }).strict(),
+  /** Give up your seat for good (mid-game this loses the game). */
+  z.object({ type: z.literal("LEAVE") }).strict(),
   /** Offer a draw (or accept one the opponent already offered). */
   z.object({ type: z.literal("OFFER_DRAW") }).strict(),
   z.object({ type: z.literal("ANSWER_DRAW"), accept: z.boolean() }).strict(),
