@@ -201,55 +201,6 @@ export function HintsPanel({ state, you, send }: PanelProps) {
   return (
     <div className="flex flex-col gap-5">
       <Title>Hint time</Title>
-      <ol aria-label="Turn order" className="flex flex-wrap items-center gap-2">
-        {round.playerIds.map((id, i) => {
-          const p = players.get(id);
-          const done = i < round.hints.length;
-          const isActive = id === activeId;
-          return (
-            <li key={id} className="flex items-center gap-1">
-              <span
-                className={cn(
-                  "relative grid place-items-center rounded-full p-1",
-                  done && "opacity-50",
-                )}
-              >
-                {isActive ? (
-                  <Annotate
-                    type="circle"
-                    show
-                    color={crayon.red}
-                    padding={2}
-                    strokeWidth={2.4}
-                  >
-                    {p && (
-                      <DoodleAvatar
-                        avatar={p.avatar}
-                        size={36}
-                        label={`${p.name}, now`}
-                      />
-                    )}
-                  </Annotate>
-                ) : (
-                  p && (
-                    <DoodleAvatar
-                      avatar={p.avatar}
-                      size={36}
-                      label={`${p.name}${done ? ", done" : ""}`}
-                    />
-                  )
-                )}
-              </span>
-              {i < round.playerIds.length - 1 && (
-                <span aria-hidden="true" className="text-sketch">
-                  →
-                </span>
-              )}
-            </li>
-          );
-        })}
-      </ol>
-
       {myTurn ? (
         <HintInput send={send} />
       ) : (
@@ -405,7 +356,9 @@ export function DiscussionPanel({ state, you, send, serverNow }: PanelProps) {
 export function VotingPanel({ state, you, send }: PanelProps) {
   const round = state.round!;
   const players = playerMap(state);
-  const candidates = round.playerIds.filter((id) => id !== you.playerId);
+  const candidates = round.playerIds.filter(
+    (id) => id !== you.playerId && !players.get(id)?.left,
+  );
   const locked = you.myVoteLocked;
 
   return (
@@ -486,6 +439,53 @@ export function VotingPanel({ state, you, send }: PanelProps) {
 
 // ── RESULT ──────────────────────────────────────────────────────────
 
+/**
+ * Hand-drawn tally marks: four upright strokes and a slash per group of
+ * five. Zero votes shows a small dash.
+ */
+function TallyMarks({ count, seed }: { count: number; seed: string }) {
+  const groups = Math.ceil(count / 5);
+  const width = Math.max(1, groups) * 44;
+  const base = [...seed].reduce((n, c) => n + c.charCodeAt(0), 0);
+  return (
+    <svg
+      viewBox={`0 0 ${width} 26`}
+      width={width}
+      height={26}
+      aria-hidden="true"
+      className="shrink-0 overflow-visible"
+    >
+      {count === 0 ? (
+        <RPath
+          d="M4 13 L18 13"
+          seed={base}
+          strokeWidth={2}
+          stroke={ink.sketch}
+        />
+      ) : (
+        Array.from({ length: groups }, (_, g) => {
+          const inGroup = Math.min(5, count - g * 5);
+          const x0 = g * 44 + 3;
+          const d = Array.from({ length: Math.min(4, inGroup) }, (_, i) => {
+            const x = x0 + i * 8;
+            return `M${x} 3 L${x + 1} 23`;
+          }).join(" ");
+          const slash = inGroup === 5 ? ` M${x0 - 4} 20 L${x0 + 29} 6` : "";
+          return (
+            <RPath
+              key={g}
+              d={d + slash}
+              seed={base + g}
+              strokeWidth={2.2}
+              stroke={ink.graphite}
+            />
+          );
+        })
+      )}
+    </svg>
+  );
+}
+
 const OUTCOME_TEXT = {
   CAUGHT: { stamp: "CAUGHT!", line: "Crewmates win!", color: crayon.green },
   ESCAPED: { stamp: "ESCAPED!", line: "The imposter wins!", color: crayon.red },
@@ -517,7 +517,10 @@ export function ResultPanel({ state, you, send }: PanelProps) {
     return () => window.clearTimeout(t);
   }, [reduced]);
 
-  const voters = state.round?.playerIds ?? Object.keys(result.tally);
+  // Everyone dealt in, most votes first. Voting is anonymous: counts only.
+  const counted = (state.round?.playerIds ?? Object.keys(result.tally))
+    .map((id) => ({ id, votes: result.tally[id] ?? 0 }))
+    .sort((a, b) => b.votes - a.votes);
 
   return (
     <div className="flex flex-col items-center gap-6 text-center">
@@ -599,63 +602,45 @@ export function ResultPanel({ state, you, send }: PanelProps) {
               <strong className="font-hand text-3xl">{result.word}</strong>{" "}
               <span className="text-sketch">({result.category})</span>
             </p>
+            <p className="text-lg">
+              The imposter&apos;s clue was{" "}
+              <strong className="font-hand text-2xl">{result.clue}</strong>
+            </p>
 
             <section
               aria-labelledby="votes-heading"
               className="w-full max-w-md text-left"
             >
               <h3 id="votes-heading" className="font-note text-2xl font-bold">
-                Who voted for whom
+                Votes
               </h3>
               <ul className="mt-2 flex flex-col gap-2">
-                {voters.map((voterId) => {
-                  const voter = players.get(voterId);
-                  const target = players.get("");
-                  if (!voter) return null;
+                {counted.map(({ id, votes }) => {
+                  const p = players.get(id);
+                  if (!p) return null;
                   return (
-                    <li
-                      key={voterId}
-                      className="flex items-center gap-2 text-lg"
-                    >
-                      <DoodleAvatar avatar={voter.avatar} size={30} />
-                      <span className="w-24 truncate">{voter.name}</span>
-                      {target ? (
-                        <>
-                          <svg
-                            viewBox="0 0 60 20"
-                            width={52}
-                            height={18}
-                            aria-hidden="true"
-                            className="overflow-visible"
-                          >
-                            <RPath
-                              d="M2 10 L54 10 M46 4 L56 10 L46 16"
-                              seed={800 + voter.name.length}
-                              strokeWidth={1.8}
-                              stroke={ink.graphite}
-                            />
-                          </svg>
-                          <span className="sr-only">voted for</span>
-                          <DoodleAvatar avatar={target.avatar} size={30} />
-                          <span
-                            className={cn(
-                              "truncate",
-                              target.id === result.imposterId &&
-                                "font-hand text-crayon-red",
-                            )}
-                          >
-                            {target.name}
-                          </span>
-                        </>
-                      ) : (
-                        <span className="font-note text-sketch">
-                          didn&apos;t vote
-                        </span>
-                      )}
+                    <li key={id} className="flex items-center gap-3 text-lg">
+                      <DoodleAvatar avatar={p.avatar} size={30} />
+                      <span
+                        className={cn(
+                          "w-28 truncate",
+                          id === result.imposterId &&
+                            "font-hand text-crayon-red",
+                        )}
+                      >
+                        {p.name}
+                      </span>
+                      <TallyMarks count={votes} seed={id} />
+                      <span className="sr-only">
+                        {votes} vote{votes === 1 ? "" : "s"}
+                      </span>
                     </li>
                   );
                 })}
               </ul>
+              <p className="mt-2 font-note text-lg text-sketch">
+                Votes are secret: nobody sees who voted for whom.
+              </p>
             </section>
 
             {isHost ? (

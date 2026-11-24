@@ -7,13 +7,10 @@ import { StickyNote } from "@/components/paper/StickyNote";
 import { DoodleAvatar } from "@/components/sketch/DoodleAvatar";
 import { DoodleIcon } from "@/components/sketch/DoodleIcon";
 import { RCircle } from "@/components/sketch/Rough";
-import { SketchBox } from "@/components/sketch/SketchBox";
-import { Tape } from "@/components/paper/Tape";
 import { useReducedMotionSafe } from "@/hooks/useReducedMotionSafe";
 import { cn } from "@/lib/cn";
 import { duration, spring, strokeEase } from "@/lib/motion";
 import { crayon, ink } from "@/lib/palette";
-import { seededRange } from "@/lib/seed";
 import type { PublicPlayer, PublicState } from "@/shared/protocol";
 import type { ConnectionStatus } from "../useImposterRoom";
 
@@ -199,78 +196,101 @@ export function RoomCodeNote({ code }: { code: string }) {
 
 // ── Players ─────────────────────────────────────────────────────────
 
-export type PlayerMark = "active" | "done" | "skipped" | "locked" | null;
+export type PlayerMark = "active" | "done" | "skipped" | null;
 
-/** A player as a little taped note: doodle, name, host crown, status. */
-export function PlayerNote({
+/** "reconnecting…" while inside the grace period, "left" after it. */
+const presence = (p: PublicPlayer) =>
+  p.left ? "left" : p.connected ? null : "reconnecting";
+
+/** One compact row: small doodle, name, and a short status tag. */
+function PlayerRow({
   player,
   isYou,
   mark,
-  size = 52,
+  typing,
 }: {
   player: PublicPlayer;
   isYou: boolean;
-  mark?: PlayerMark;
-  size?: number;
+  mark: PlayerMark;
+  typing: boolean;
 }) {
-  const tilt = seededRange(`${player.id}:note`, -4, 4);
+  const reduced = useReducedMotionSafe();
+  const away = presence(player);
+  const tag =
+    away === "left"
+      ? "left"
+      : away === "reconnecting"
+        ? "reconnecting…"
+        : mark === "active"
+          ? typing
+            ? "writing…"
+            : "their turn"
+          : null;
   return (
-    <li className="relative list-none" style={{ rotate: `${tilt}deg` }}>
-      <SketchBox
-        seed={`note-${player.id}`}
-        fill={ink.card}
-        fillStyle="solid"
-        shadow="rest"
-        stroke={mark === "active" ? crayon.red : ink.graphite}
-        strokeWidth={mark === "active" ? 2.6 : 1.6}
-        className="flex w-24 flex-col items-center gap-1 px-2 pt-4 pb-2 sm:w-28"
-      >
-        <DoodleAvatar
-          avatar={player.avatar}
-          size={size}
-          crown={player.isHost}
-          faded={!player.connected}
-        />
-        <span className="max-w-full truncate text-center text-lg leading-tight">
-          {player.name}
-          {isYou && <span className="text-sketch"> (you)</span>}
-        </span>
-        <span className="sr-only">
-          {player.isHost ? "Host. " : ""}
-          {!player.connected ? "Offline. " : ""}
-          {mark === "active"
-            ? "Their turn. "
-            : mark === "done"
-              ? "Gave a hint. "
-              : mark === "skipped"
-                ? "No hint. "
-                : mark === "locked"
-                  ? "Vote locked. "
-                  : ""}
-        </span>
-        {mark && mark !== "active" && (
-          <span className="absolute -top-2 -right-2" aria-hidden="true">
-            <DoodleIcon
-              name={mark === "skipped" ? "close" : "check"}
-              size={22}
-              color={mark === "skipped" ? ink.sketch : crayon.green}
-              strokeWidth={2.6}
-            />
-          </span>
-        )}
-        {!player.connected && (
-          <span className="font-note text-lg text-sketch">zzz…</span>
-        )}
-      </SketchBox>
-      <Tape
-        seed={`tape-${player.id}`}
-        height={16}
-        className="absolute -top-2 left-1/2 -translate-x-1/2 scale-75"
+    <li
+      className={cn(
+        "flex min-h-11 items-center gap-2 border-b border-[var(--rule-line)] py-1",
+        mark === "active" && !away && "text-crayon-red",
+      )}
+    >
+      <DoodleAvatar
+        avatar={player.avatar}
+        size={30}
+        crown={player.isHost}
+        faded={Boolean(away)}
       />
+      <span
+        className={cn(
+          "min-w-0 flex-1 truncate text-lg leading-tight",
+          away === "left" && "text-sketch line-through",
+        )}
+      >
+        {player.name}
+        {isYou && <span className="text-sketch"> (you)</span>}
+      </span>
+      <span className="sr-only">
+        {player.isHost ? "Host. " : ""}
+        {mark === "done"
+          ? "Gave a hint. "
+          : mark === "skipped"
+            ? "No hint. "
+            : ""}
+      </span>
+      {tag ? (
+        <motion.span
+          className={cn(
+            "shrink-0 font-note text-lg",
+            away === "reconnecting"
+              ? "text-crayon-orange"
+              : away
+                ? "text-sketch"
+                : "",
+          )}
+          animate={
+            away === "reconnecting" && !reduced
+              ? { opacity: [0.4, 1, 0.4] }
+              : undefined
+          }
+          transition={{ duration: 1.4, repeat: Infinity }}
+        >
+          {tag}
+        </motion.span>
+      ) : (
+        mark &&
+        mark !== "active" && (
+          <DoodleIcon
+            name={mark === "skipped" ? "close" : "check"}
+            size={20}
+            color={mark === "skipped" ? ink.sketch : crayon.green}
+            strokeWidth={2.6}
+          />
+        )
+      )}
     </li>
   );
 }
 
+/** Narrow list of players beside the game. */
 export function PlayerBoard({
   state,
   youId,
@@ -280,21 +300,23 @@ export function PlayerBoard({
   youId: string;
   marks?: Record<string, PlayerMark>;
 }) {
+  const here = state.players.filter((p) => !p.left).length;
   return (
-    <section aria-labelledby="players-heading" className="flex flex-col gap-3">
+    <section aria-labelledby="players-heading" className="flex flex-col gap-1">
       <h2 id="players-heading" className="font-hand text-2xl">
         Players{" "}
         <span className="text-sketch">
-          {state.players.length}/{state.maxPlayers}
+          {here}/{state.maxPlayers}
         </span>
       </h2>
-      <ul className="flex flex-wrap gap-x-2 gap-y-5 pt-2">
+      <ul aria-live="polite" className="flex flex-col">
         {state.players.map((p) => (
-          <PlayerNote
+          <PlayerRow
             key={p.id}
             player={p}
             isYou={p.id === youId}
             mark={marks[p.id] ?? null}
+            typing={Boolean(state.round?.activeTyping)}
           />
         ))}
       </ul>
@@ -304,7 +326,7 @@ export function PlayerBoard({
 
 // ── Shared notebook page of hints ───────────────────────────────────
 
-/** Hints written on a notebook page, in turn order, one line each. */
+/** Hints written on a notebook page, in the order given, one line each. */
 export function HintsNotebook({
   state,
   activeId,
@@ -323,13 +345,13 @@ export function HintsNotebook({
   return (
     <section
       aria-labelledby="hints-heading"
-      className="torn-paper relative px-4 py-4 sm:px-6"
+      className="torn-paper relative min-h-72 px-5 py-6 sm:px-8"
     >
-      <h2 id="hints-heading" className="mb-2 font-note text-2xl font-bold">
+      <h2 id="hints-heading" className="mb-3 font-note text-3xl font-bold">
         Hints so far
       </h2>
       {hints.length === 0 && !active && (
-        <p className="text-lg text-sketch">No hints yet.</p>
+        <p className="text-xl text-sketch">No hints yet.</p>
       )}
       <ol className="flex flex-col">
         {hints.map((h, i) => {
@@ -337,7 +359,7 @@ export function HintsNotebook({
           return (
             <motion.li
               key={`${h.playerId}-${i}`}
-              className="flex min-h-[2rem] items-center gap-3"
+              className="flex min-h-[3.25rem] items-center gap-4 border-b border-[var(--rule-line)]"
               // Only hints added while you watch write themselves in;
               // ones already on the page when it appears show at once.
               initial={
@@ -353,13 +375,13 @@ export function HintsNotebook({
                 ease: strokeEase,
               }}
             >
-              {p && <DoodleAvatar avatar={p.avatar} size={28} />}
-              <span className="w-24 shrink-0 truncate text-lg text-sketch sm:w-28">
+              {p && <DoodleAvatar avatar={p.avatar} size={40} />}
+              <span className="w-28 shrink-0 truncate text-xl text-sketch sm:w-36">
                 {p?.name ?? "?"}
               </span>
               <span
                 className={cn(
-                  "font-hand text-2xl",
+                  "font-hand text-3xl sm:text-4xl",
                   h.text === null && "text-sketch",
                 )}
               >
@@ -370,14 +392,14 @@ export function HintsNotebook({
         })}
         {active && (
           <li
-            className="flex min-h-[2rem] items-center gap-3"
+            className="flex min-h-[3.25rem] items-center gap-4 border-b border-[var(--rule-line)]"
             aria-live="polite"
           >
-            <DoodleAvatar avatar={active.avatar} size={28} />
-            <span className="w-24 shrink-0 truncate text-lg text-sketch sm:w-28">
+            <DoodleAvatar avatar={active.avatar} size={40} />
+            <span className="w-28 shrink-0 truncate text-xl text-sketch sm:w-36">
               {active.name}
             </span>
-            <span className="font-note text-2xl text-sketch">
+            <span className="font-note text-3xl text-sketch">
               {activeTyping ? (
                 <>
                   writing

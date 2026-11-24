@@ -181,7 +181,8 @@ export function SecretCard({
                       </strong>
                     </span>
                     <span className="font-note text-lg text-sketch">
-                      Blend in. Nobody else sees this!
+                      Blend in. Everyone sees this clue too, so don&apos;t just
+                      repeat it!
                     </span>
                   </>
                 ) : (
@@ -194,8 +195,15 @@ export function SecretCard({
                       seed={`word-${card.word}`}
                       className="font-hand text-4xl leading-tight break-words sm:text-5xl"
                     />
+                    <span className="text-lg">
+                      Imposter&apos;s clue:{" "}
+                      <strong className="font-hand text-xl">
+                        {card.imposterClue}
+                      </strong>
+                    </span>
                     <span className="font-note text-lg text-sketch">
-                      Hint at it, don&apos;t say it!
+                      Hint at the word, don&apos;t say it. A hint that just
+                      repeats the clue is suspicious!
                     </span>
                   </>
                 ))}

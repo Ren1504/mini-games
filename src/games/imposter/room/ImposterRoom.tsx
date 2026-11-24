@@ -12,6 +12,7 @@ import {
 } from "react";
 import { HandLettered } from "@/components/sketch/HandLettered";
 import { SketchButton } from "@/components/sketch/SketchButton";
+import { cn } from "@/lib/cn";
 import { useReducedMotionSafe } from "@/hooks/useReducedMotionSafe";
 import { duration, spring } from "@/lib/motion";
 import { TIMINGS } from "@/shared/config";
@@ -261,6 +262,7 @@ function RoomView({
   const total = PHASE_TOTAL[state.phase];
   const serverNow = () => Date.now() + offset;
   const props = { state, you, send, serverNow };
+  const notice = useRoomNotices(state, you.playerId);
 
   const marks = useMemo(() => {
     const m: Record<string, PlayerMark> = {};
@@ -294,7 +296,7 @@ function RoomView({
         {PHASE_NAME[state.phase]}
       </p>
 
-      <div className="grid gap-8 lg:grid-cols-[1fr_17rem]">
+      <div className="grid gap-8 lg:grid-cols-[1fr_14rem]">
         <AnimatePresence mode="wait">
           <motion.section
             key={state.phase + (state.round?.number ?? 0)}
@@ -324,18 +326,68 @@ function RoomView({
         </aside>
       </div>
 
-      <ErrorToast error={lastError} />
+      <Toast item={lastError} role="alert" />
+      <Toast item={notice} role="status" className="bottom-24" />
     </div>
   );
 }
 
-/** Rejected actions (wrong turn, hint gives the word away…), for 4s. */
-function ErrorToast({ error }: { error: RoomError | null }) {
-  const [visible, setVisible] = useState<RoomError | null>(null);
+type Notice = { message: string; at: number };
+
+/**
+ * "Ann left" once a player's reconnect grace runs out, and "Bob is now
+ * the host" when host passes on. Derived by comparing each new state with
+ * the previous one.
+ */
+function useRoomNotices(state: PublicState, youId: string): Notice | null {
+  const [prev, setPrev] = useState(state);
+  const [notice, setNotice] = useState<Notice | null>(null);
+  if (prev !== state) {
+    const messages: string[] = [];
+    const now = new Map(state.players.map((p) => [p.id, p]));
+    for (const before of prev.players) {
+      const after = now.get(before.id);
+      // In a round the player stays listed as left; in the lobby the
+      // seat of someone who was reconnecting is simply released.
+      const leftRound = after && !before.left && after.left;
+      const leftLobby =
+        !after &&
+        !before.connected &&
+        prev.phase === "LOBBY" &&
+        state.phase === "LOBBY";
+      if (leftRound || leftLobby) messages.push(`${before.name} left`);
+    }
+    if (prev.hostId && state.hostId && prev.hostId !== state.hostId) {
+      const host = now.get(state.hostId);
+      if (host)
+        messages.push(
+          host.id === youId
+            ? "You're the host now"
+            : `${host.name} is now the host`,
+        );
+    }
+    setPrev(state);
+    if (messages.length)
+      setNotice({ message: messages.join(" · "), at: state.version });
+  }
+  return notice;
+}
+
+/** A sticky note at the bottom for 4s: rejected actions, or room notices. */
+function Toast({
+  item,
+  role,
+  className,
+}: {
+  item: Notice | RoomError | null;
+  role: "alert" | "status";
+  className?: string;
+}) {
+  const [visible, setVisible] = useState<Notice | null>(null);
   const [lastShown, setLastShown] = useState<number | null>(null);
-  if (error && error.at !== lastShown) {
-    setLastShown(error.at);
-    setVisible(error);
+  if (item && item.at !== lastShown) {
+    setLastShown(item.at);
+    setVisible(item);
   }
   useEffect(() => {
     if (!visible) return;
@@ -344,9 +396,12 @@ function ErrorToast({ error }: { error: RoomError | null }) {
   }, [visible]);
   return (
     <div
-      role="alert"
-      aria-live="assertive"
-      className="pointer-events-none fixed inset-x-0 bottom-6 z-40 flex justify-center px-4"
+      role={role}
+      aria-live={role === "alert" ? "assertive" : "polite"}
+      className={cn(
+        "pointer-events-none fixed inset-x-0 bottom-6 z-40 flex justify-center px-4",
+        className,
+      )}
     >
       <AnimatePresence>
         {visible && (
