@@ -12,6 +12,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "chess.js": "1.4.0",
     "partyserver": "0.5.10"
   },
   "devDependencies": {
