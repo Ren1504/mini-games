@@ -181,13 +181,11 @@ function CardButton({
             fill={ink.card}
             fillStyle="solid"
             stroke={
-              card.matched
-                ? crayon.green
-                : missed
-                  ? crayon.red
-                  : ink.graphite
+              card.matched ? crayon.green : missed ? crayon.red : ink.graphite
             }
-            strokeWidth={card.matched || missed ? (small ? 2.4 : 3) : small ? 1.8 : 2.2}
+            strokeWidth={
+              card.matched || missed ? (small ? 2.4 : 3) : small ? 1.8 : 2.2
+            }
             inset={2}
             className="grid size-full place-items-center"
           >
@@ -581,9 +579,7 @@ export function MemoryMatch() {
                   seed="mm-again"
                   color="green"
                   filled
-                  onClick={() =>
-                    deal(size, "Pick a board, then press Start.")
-                  }
+                  onClick={() => deal(size, "Pick a board, then press Start.")}
                 >
                   Play again
                 </SketchButton>

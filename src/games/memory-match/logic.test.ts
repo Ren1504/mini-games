@@ -39,18 +39,22 @@ describe("symbols", () => {
 });
 
 describe("newGame", () => {
-  it.each(SIZES)("deals a %i×%i board where every card has exactly one twin", (size) => {
-    const g = newGame(size, POOL, mulberry32(size));
-    expect(g.cards).toHaveLength(size * size);
-    expect(g.pairsTotal).toBe(Math.floor((size * size) / 2));
-    const counts = new Map<string, number>();
-    for (const c of g.cards) {
-      if (c.symbol !== null) counts.set(c.symbol, (counts.get(c.symbol) ?? 0) + 1);
-    }
-    expect(counts.size).toBe(g.pairsTotal);
-    for (const n of counts.values()) expect(n).toBe(2);
-    expect(new Set(g.cards.map((c) => c.id)).size).toBe(g.cards.length);
-  });
+  it.each(SIZES)(
+    "deals a %i×%i board where every card has exactly one twin",
+    (size) => {
+      const g = newGame(size, POOL, mulberry32(size));
+      expect(g.cards).toHaveLength(size * size);
+      expect(g.pairsTotal).toBe(Math.floor((size * size) / 2));
+      const counts = new Map<string, number>();
+      for (const c of g.cards) {
+        if (c.symbol !== null)
+          counts.set(c.symbol, (counts.get(c.symbol) ?? 0) + 1);
+      }
+      expect(counts.size).toBe(g.pairsTotal);
+      for (const n of counts.values()) expect(n).toBe(2);
+      expect(new Set(g.cards.map((c) => c.id)).size).toBe(g.cards.length);
+    },
+  );
 
   it("puts the free tile in the middle of odd boards only", () => {
     for (const size of SIZES) {
@@ -69,7 +73,8 @@ describe("newGame", () => {
     // Over many small games every symbol shows up at some point.
     const used = new Set<string>();
     for (let s = 0; s < 60; s++) {
-      for (const c of newGame(4, POOL, mulberry32(s)).cards) used.add(c.symbol!);
+      for (const c of newGame(4, POOL, mulberry32(s)).cards)
+        used.add(c.symbol!);
     }
     expect(used.size).toBe(32);
   });
@@ -144,22 +149,25 @@ describe("flip", () => {
     expect(flip(odd, freeIndex(5)!, 0).outcome).toBe("ignored");
   });
 
-  it.each(SIZES)("finishes a %i×%i game when the last pair is found", (size) => {
-    let g = newGame(size, POOL, mulberry32(size * 11));
-    const pairs = pairsOf(g);
-    let t = 100;
-    for (const [a, b] of pairs) {
-      g = flip(g, a, (t += 1000)).state;
-      const r = flip(g, b, (t += 1000));
-      expect(r.outcome).toBe("match");
-      g = r.state;
-    }
-    expect(g.pairsFound).toBe(g.pairsTotal);
-    expect(g.moves).toBe(pairs.length);
-    expect(g.finishedAt).toBe(t);
-    expect(elapsedMs(g, t + 99_999)).toBe(t - 1100);
-    expect(flip(g, 0, t + 1).outcome).toBe("ignored");
-  });
+  it.each(SIZES)(
+    "finishes a %i×%i game when the last pair is found",
+    (size) => {
+      let g = newGame(size, POOL, mulberry32(size * 11));
+      const pairs = pairsOf(g);
+      let t = 100;
+      for (const [a, b] of pairs) {
+        g = flip(g, a, (t += 1000)).state;
+        const r = flip(g, b, (t += 1000));
+        expect(r.outcome).toBe("match");
+        g = r.state;
+      }
+      expect(g.pairsFound).toBe(g.pairsTotal);
+      expect(g.moves).toBe(pairs.length);
+      expect(g.finishedAt).toBe(t);
+      expect(elapsedMs(g, t + 99_999)).toBe(t - 1100);
+      expect(flip(g, 0, t + 1).outcome).toBe("ignored");
+    },
+  );
 });
 
 describe("formatTime", () => {
@@ -189,7 +197,11 @@ describe("best results", () => {
     expect(parseBests(null)).toEqual({});
     expect(parseBests("x")).toEqual({});
     expect(
-      parseBests({ 4: { moves: 9, ms: 1000 }, 5: { moves: "x" }, 9: { moves: 1, ms: 1 } }),
+      parseBests({
+        4: { moves: 9, ms: 1000 },
+        5: { moves: "x" },
+        9: { moves: 1, ms: 1 },
+      }),
     ).toEqual({ 4: { moves: 9, ms: 1000 } });
   });
 });

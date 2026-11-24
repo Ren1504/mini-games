@@ -82,7 +82,9 @@ export const CARD_SYMBOLS: readonly CardSymbol[] = [
   {
     id: "lightning",
     name: "Lightning bolt",
-    parts: [{ d: "M28 3 L11 27 L22 27 L18 45 L37 19 L26 19 L32 3 Z", fill: yellow }],
+    parts: [
+      { d: "M28 3 L11 27 L22 27 L18 45 L37 19 L26 19 L32 3 Z", fill: yellow },
+    ],
   },
   {
     id: "raindrop",
@@ -171,7 +173,11 @@ export const CARD_SYMBOLS: readonly CardSymbol[] = [
     name: "Apple",
     parts: [
       { d: "M24 15 L25 7", width: 2.6 },
-      { d: "M25 10 C28 4 34 4 37 6 C35 11 29 12 25 10 Z", fill: green, solid: true },
+      {
+        d: "M25 10 C28 4 34 4 37 6 C35 11 29 12 25 10 Z",
+        fill: green,
+        solid: true,
+      },
       {
         d: "M24 15 C18 10 7 12 7 24 C7 35 14 43 20 43 C22 43 23 42 24 42 C25 42 26 43 28 43 C34 43 41 35 41 24 C41 12 30 10 24 15 Z",
         fill: red,
@@ -183,7 +189,11 @@ export const CARD_SYMBOLS: readonly CardSymbol[] = [
     name: "Cherries",
     parts: [
       { d: "M14 30 C16 20 22 12 28 7 M33 28 C32 19 30 12 28 7", width: 2.2 },
-      { d: "M28 7 C32 2 39 3 42 6 C38 11 32 11 28 7 Z", fill: green, solid: true },
+      {
+        d: "M28 7 C32 2 39 3 42 6 C38 11 32 11 28 7 Z",
+        fill: green,
+        solid: true,
+      },
       { d: circ(14, 35, 8), fill: red },
       { d: circ(33, 33, 8), fill: red },
     ],
@@ -405,7 +415,11 @@ export const CARD_SYMBOLS: readonly CardSymbol[] = [
       },
       { d: circ(18.5, 19, 2.8), fill: PENCIL, solid: true },
       { d: circ(29.5, 19, 2.8), fill: PENCIL, solid: true },
-      { d: "M21.5 29 a2.5 3.2 0 1 0 5 0 a2.5 3.2 0 1 0 -5 0", fill: PENCIL, solid: true },
+      {
+        d: "M21.5 29 a2.5 3.2 0 1 0 5 0 a2.5 3.2 0 1 0 -5 0",
+        fill: PENCIL,
+        solid: true,
+      },
     ],
   },
 ];
