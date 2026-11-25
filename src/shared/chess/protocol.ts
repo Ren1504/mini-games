@@ -106,6 +106,11 @@ export const chessGameSchema = z
     remaining: z.object({ w: z.number(), b: z.number() }).strict().nullable(),
     /** Server time when the side to move started thinking. */
     turnStartedAt: z.number(),
+    /**
+     * Timed games, before White's first move: server time by which it must
+     * be made, or the game is cancelled. Clocks don't run until then.
+     */
+    firstMoveBy: z.number().nullable(),
     /** A draw offer waiting for an answer, and who made it. */
     drawOfferBy: colorSchema.nullable(),
   })
@@ -124,6 +129,8 @@ export const outcomeSchema = z.enum([
   "REPETITION",
   "FIFTY_MOVES",
   "INSUFFICIENT",
+  /** Cancelled: White didn't make the first move in time. */
+  "ABORTED",
 ]);
 
 const sideSchema = z

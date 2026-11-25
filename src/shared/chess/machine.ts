@@ -168,10 +168,20 @@ const colorOf = (game: GameRecord, seatId: string): Color | null =>
 const toMove = (game: GameRecord): Color =>
   game.moves.length % 2 === 0 ? "w" : "b";
 
-/** Server time when the side to move runs out of time (null: no clock). */
+/**
+ * Server time when the side to move runs out of time. Null when there's
+ * no clock, and before White's first move (the clocks aren't running yet).
+ */
 export function flagAt(game: GameRecord): number | null {
-  return game.remaining
+  return game.remaining && game.moves.length > 0
     ? game.turnStartedAt + game.remaining[toMove(game)]
+    : null;
+}
+
+/** Timed games: when White's first move is due (null once it's made). */
+export function firstMoveDeadline(game: GameRecord): number | null {
+  return game.remaining && game.moves.length === 0
+    ? game.turnStartedAt + CHESS_TIMINGS.FIRST_MOVE_MS
     : null;
 }
 
@@ -410,13 +420,19 @@ export function reduceChess(
             flag(s, game);
             break;
           }
+          const firstDue = firstMoveDeadline(game);
+          if (firstDue !== null && ctx.now >= firstDue) {
+            finish(s, "ABORTED", null);
+            break;
+          }
           if (game.moves.length >= CHESS_LIMITS.MAX_PLIES)
             return fail(connId, "ILLEGAL_MOVE", "This game is too long.");
           const played = tryMove(game.moves, message.uci);
           if (!played)
             return fail(connId, "ILLEGAL_MOVE", "That move isn't allowed.");
 
-          if (game.remaining) {
+          // White's first move is free: clocks start once it's made.
+          if (game.remaining && game.moves.length > 0) {
             game.remaining[myColor] -= ctx.now - game.turnStartedAt;
           }
           game.turnStartedAt = ctx.now;
@@ -490,7 +506,10 @@ export function reduceChess(
       }
       const game = s.game;
       const deadline = game ? flagAt(game) : null;
+      const firstDue = game ? firstMoveDeadline(game) : null;
       if (game && deadline !== null && now >= deadline) flag(s, game);
+      else if (game && firstDue !== null && now >= firstDue)
+        finish(s, "ABORTED", null);
       break;
     }
   }
@@ -524,6 +543,8 @@ export function chessNextWakeAt(s: ChessRoomState, now: number): number | null {
   const times: number[] = [];
   const deadline = s.game ? flagAt(s.game) : null;
   if (deadline !== null) times.push(deadline);
+  const firstDue = s.game ? firstMoveDeadline(s.game) : null;
+  if (firstDue !== null) times.push(firstDue);
   for (const p of s.players) {
     if (!p.connected && p.disconnectedAt !== null) {
       const expiry = p.disconnectedAt + CHESS_TIMINGS.RECONNECT_GRACE_MS;
@@ -566,6 +587,7 @@ export function toChessPublicState(s: ChessRoomState): ChessPublicState {
           clockMinutes: s.game.clockMinutes,
           remaining: s.game.remaining,
           turnStartedAt: s.game.turnStartedAt,
+          firstMoveBy: firstMoveDeadline(s.game),
           drawOfferBy: s.game.drawOfferBy,
         }
       : null,

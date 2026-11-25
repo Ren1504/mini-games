@@ -191,27 +191,51 @@ describe("moves", () => {
     expect(r.s.result!.black.id).toBe(black);
   });
 
-  it("runs the clocks: time used comes off the mover's clock", () => {
+  it("runs the clocks: White's first move is free, then time comes off the mover", () => {
     const r = room().started(5);
     r.advance(3_000);
     r.play("e2e4");
-    expect(r.s.game!.remaining).toEqual({ w: 300_000 - 3_000, b: 300_000 });
+    expect(r.s.game!.remaining).toEqual({ w: 300_000, b: 300_000 });
     r.advance(7_000);
     r.play("e7e5");
-    expect(r.s.game!.remaining).toEqual({ w: 297_000, b: 293_000 });
+    expect(r.s.game!.remaining).toEqual({ w: 300_000, b: 293_000 });
+    r.advance(4_000);
+    r.play("g1f3");
+    expect(r.s.game!.remaining).toEqual({ w: 296_000, b: 293_000 });
   });
 
   it("loses on time when the clock runs out", () => {
     const r = room().started(5);
+    r.play("e2e4");
     expect(chessNextWakeAt(r.s, 0)).toBe(r.s.game!.turnStartedAt + 300_000);
     r.advance(300_000);
-    expect(r.s.result).toMatchObject({ outcome: "TIMEOUT", winner: "b" });
+    expect(r.s.result).toMatchObject({ outcome: "TIMEOUT", winner: "w" });
+  });
+
+  it("cancels a timed game if White doesn't move within 30s", () => {
+    const r = room().started(5);
+    const due = r.s.game!.turnStartedAt + CHESS_TIMINGS.FIRST_MOVE_MS;
+    expect(toChessPublicState(r.s).game!.firstMoveBy).toBe(due);
+    expect(chessNextWakeAt(r.s, 0)).toBe(due);
+    r.advance(CHESS_TIMINGS.FIRST_MOVE_MS - 1);
+    expect(r.s.phase).toBe("PLAYING");
+    r.advance(1);
+    expect(r.s.result).toMatchObject({ outcome: "ABORTED", winner: null });
+  });
+
+  it("drops the first-move deadline once White has moved", () => {
+    const r = room().started(5);
+    r.play("e2e4");
+    expect(toChessPublicState(r.s).game!.firstMoveBy).toBeNull();
+    r.advance(CHESS_TIMINGS.FIRST_MOVE_MS + 1_000);
+    expect(r.s.phase).toBe("PLAYING");
   });
 
   it("has no clock and no flag deadline when untimed", () => {
     const r = room().started(0);
     expect(r.s.game!.remaining).toBeNull();
     expect(chessNextWakeAt(r.s, 0)).toBeNull();
+    expect(toChessPublicState(r.s).game!.firstMoveBy).toBeNull();
     r.advance(3_600_000);
     expect(r.s.phase).toBe("PLAYING");
   });

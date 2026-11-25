@@ -91,6 +91,15 @@ export const sound = {
     volume: 0.16,
   },
   bonk: { fromHz: 240, toHz: 120, length: 0.16, volume: 0.2 },
+  /**
+   * Recorded clips in public/sounds, each with its own gain so they come
+   * out about equally loud (Victory is recorded much quieter than Defeat).
+   */
+  clips: {
+    check: { src: "/sounds/chess-check.mp3", gain: 1 },
+    victory: { src: "/sounds/chess-victory.mp3", gain: 3.5 },
+    defeat: { src: "/sounds/chess-defeat.mp3", gain: 0.75 },
+  },
   fanfare: {
     notes: [
       [523.25, 0.3, 0.14], // C5

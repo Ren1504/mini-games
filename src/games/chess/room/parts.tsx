@@ -51,10 +51,17 @@ const OUTCOME_TEXT: Record<ChessOutcome, string> = {
   REPETITION: "by threefold repetition",
   FIFTY_MOVES: "by the 50-move rule",
   INSUFFICIENT: "not enough pieces left to mate",
+  ABORTED: "White didn't make the first move within 30 seconds",
 };
 
 /** "Ann wins by checkmate!" / "Draw by stalemate". */
 export function resultHeadline(result: ChessResult, youId: string) {
+  if (result.outcome === "ABORTED") {
+    return {
+      title: "Game cancelled",
+      detail: `${OUTCOME_TEXT.ABORTED}, so the game was called off.`,
+    };
+  }
   if (!result.winner) {
     const why = OUTCOME_TEXT[result.outcome];
     return {

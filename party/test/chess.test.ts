@@ -129,7 +129,7 @@ describe("ChessRoom Durable Object", () => {
     expect((await waitFor(white, isError)).code).toBe("ILLEGAL_MOVE");
   });
 
-  it("schedules the clock flag as a storage alarm", async () => {
+  it("schedules the first-move deadline as a storage alarm", async () => {
     await startedGame("CLKK5", 5);
     const { saved, alarm } = await runInDurableObject(
       stub("CLKK5"),
@@ -139,7 +139,9 @@ describe("ChessRoom Durable Object", () => {
       }),
     );
     expect(saved?.game?.remaining).toEqual({ w: 300_000, b: 300_000 });
-    expect(alarm).toBe(saved!.game!.turnStartedAt + 300_000);
+    // Clocks wait for White's first move; until then the alarm is the
+    // 30-second first-move deadline.
+    expect(alarm).toBe(saved!.game!.turnStartedAt + 30_000);
   });
 
   it("restores a seat and the game after the object is evicted", async () => {

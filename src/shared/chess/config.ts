@@ -12,6 +12,11 @@ export const CHESS_TIMINGS = {
    * the seat is simply freed.
    */
   RECONNECT_GRACE_MS: 60_000,
+  /**
+   * Timed games: clocks only start after White's first move. If White
+   * hasn't moved within this long, the game is cancelled.
+   */
+  FIRST_MOVE_MS: 30_000,
   /** Room storage is wiped this long after the last player leaves. */
   EMPTY_ROOM_TTL_MS: 10 * 60_000,
 } as const;

@@ -231,6 +231,7 @@ type ViewProps = {
 function RoomView({ room, state, you }: ViewProps) {
   const reduced = useReducedMotionSafe();
   const notice = useRoomNotices(state, you.playerId);
+  useResultSound(state.result, you.playerId);
   const [nudge, setNudge] = useState<Notice | null>(null);
   const playing = state.phase === "PLAYING" && state.game;
   return (
@@ -577,13 +578,22 @@ function GameView({
   const serverNow = now + room.offset;
   useMoveSounds(chess, moves.length);
 
+  // Clocks start after White's first move; until then nobody's ticks.
+  const clocksRunning = timed && game.moves.length > 0;
   const clockFor = (c: Color) => {
     if (!game.remaining) return null;
     const base = game.remaining[c];
     // Only the side to move (per the server) is ticking.
     const serverTurn: Color = game.moves.length % 2 === 0 ? "w" : "b";
-    return c === serverTurn ? base - (serverNow - game.turnStartedAt) : base;
+    return clocksRunning && c === serverTurn
+      ? base - (serverNow - game.turnStartedAt)
+      : base;
   };
+  /** Seconds White has left to make the first move (timed games). */
+  const firstMoveSeconds =
+    game.firstMoveBy !== null
+      ? Math.max(0, Math.ceil((game.firstMoveBy - serverNow) / 1000))
+      : null;
   const player = (c: Color) =>
     state.players.find(
       (p) => p.id === (c === "w" ? game.whiteId : game.blackId),
@@ -597,7 +607,7 @@ function GameView({
       captured={captured[c]}
       lead={c === "w" ? balance : -balance}
       clockMs={clockFor(c)}
-      ticking={timed && turn === c}
+      ticking={clocksRunning && turn === c}
       toMove={turn === c}
       serverNow={serverNow}
     />
@@ -605,13 +615,21 @@ function GameView({
 
   const opponentName =
     player(myColor ? (myColor === "w" ? "b" : "w") : "b")?.name ?? "Opponent";
-  const status = chess.isCheck()
-    ? myTurn
-      ? "Check! Your move."
-      : `Check! ${opponentName} is thinking…`
-    : myTurn
-      ? "Your move"
-      : `${opponentName} is thinking…`;
+  const status =
+    firstMoveSeconds !== null && moves.length === 0
+      ? myTurn
+        ? `Your move: make your first move within ${firstMoveSeconds}s`
+        : `Waiting for ${opponentName}'s first move (${firstMoveSeconds}s)`
+      : chess.isCheck()
+        ? myTurn
+          ? "Check! Your move."
+          : `Check! ${opponentName} is thinking…`
+        : myTurn
+          ? "Your move"
+          : `${opponentName} is thinking…`;
+  const urgent =
+    chess.isCheck() ||
+    (firstMoveSeconds !== null && moves.length === 0 && firstMoveSeconds <= 10);
 
   return (
     // The board is as big as the screen allows: full width on phones, and
@@ -637,10 +655,7 @@ function GameView({
       <div className="flex flex-col gap-5">
         <p
           aria-live="polite"
-          className={cn(
-            "font-hand text-3xl",
-            chess.isCheck() && "text-crayon-red",
-          )}
+          className={cn("font-hand text-3xl", urgent && "text-crayon-red")}
         >
           {status}
         </p>
@@ -748,15 +763,37 @@ function DrawAndResign({
  * move, a rustle for a capture, the chime for check.
  */
 function useMoveSounds(chess: ReturnType<typeof replay>, plies: number) {
-  const { tick, rustle, chime } = useSound();
+  const { tick, rustle, clip } = useSound();
   const heard = useRef(plies);
   useEffect(() => {
     if (plies <= heard.current) return;
     heard.current = plies;
     const last = chess.history({ verbose: true }).at(-1);
     if (!last) return;
-    if (chess.isCheck()) chime();
+    // Checkmate: the Victory/Defeat sound plays instead (see useResultSound).
+    if (chess.isCheckmate()) return;
+    // Check sounds for both players, whoever gave it.
+    if (chess.isCheck()) clip("check");
     else if (last.captured) rustle();
     else tick();
-  }, [plies, chess, chime, rustle, tick]);
+  }, [plies, chess, clip, rustle, tick]);
+}
+
+/**
+ * When a game ends: Victory for the winner, Defeat for the loser, a soft
+ * chime for a draw, nothing for a cancelled game. Results already on
+ * screen when the page loads stay quiet (no replay on refresh).
+ */
+function useResultSound(result: ChessPublicState["result"], youId: string) {
+  const { clip, chime } = useSound();
+  const heard = useRef(result?.number ?? 0);
+  useEffect(() => {
+    if (!result || result.number <= heard.current) return;
+    heard.current = result.number;
+    if (result.outcome === "ABORTED") return;
+    const myColor: Color | null =
+      result.white.id === youId ? "w" : result.black.id === youId ? "b" : null;
+    if (!result.winner || !myColor) chime();
+    else clip(result.winner === myColor ? "victory" : "defeat");
+  }, [result, youId, clip, chime]);
 }

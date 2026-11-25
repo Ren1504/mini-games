@@ -12,6 +12,8 @@ import {
 } from "react";
 import { sound } from "@/lib/motion";
 
+export type ClipName = keyof typeof sound.clips;
+
 const KEY = "doodle-arcade:sound";
 const EVENT = "doodle-arcade:sound-change";
 const SRC = "/sounds/paper-rustle.mp3";
@@ -29,6 +31,8 @@ type SoundApi = {
   bonk: () => void;
   /** Short happy arpeggio for a win; starts just after a chime. */
   fanfare: () => void;
+  /** A recorded clip from public/sounds (chess check, victory, defeat). */
+  clip: (name: ClipName) => void;
 };
 
 const SoundContext = createContext<SoundApi>({
@@ -39,6 +43,7 @@ const SoundContext = createContext<SoundApi>({
   chime: () => {},
   bonk: () => {},
   fanfare: () => {},
+  clip: () => {},
 });
 
 function readEnabled(): boolean {
@@ -218,6 +223,42 @@ export function SoundProvider({ children }: { children: ReactNode }) {
     osc.stop(now + length + 0.02);
   }, [context]);
 
+  /** Clip files, fetched and decoded once each (on first use). */
+  const clipsRef = useRef(new Map<ClipName, Promise<AudioBuffer | null>>());
+  const clip = useCallback(
+    (name: ClipName) => {
+      if (!readEnabled()) return;
+      const { src, gain: level } = sound.clips[name];
+      let buffer = clipsRef.current.get(name);
+      if (!buffer) {
+        buffer = fetch(src)
+          .then((r) =>
+            r.ok
+              ? r.arrayBuffer()
+              : Promise.reject(new Error(String(r.status))),
+          )
+          .then((data) => context().decodeAudioData(data))
+          .catch(() => {
+            clipsRef.current.delete(name); // retry next time
+            return null;
+          });
+        clipsRef.current.set(name, buffer);
+      }
+      void buffer.then(async (decoded) => {
+        if (!decoded) return;
+        const ctx = context();
+        if (ctx.state === "suspended") await ctx.resume();
+        const src = ctx.createBufferSource();
+        src.buffer = decoded;
+        const gain = ctx.createGain();
+        gain.gain.value = level;
+        src.connect(gain).connect(ctx.destination);
+        src.start();
+      });
+    },
+    [context],
+  );
+
   const rustle = useCallback(() => {
     if (readEnabled()) void play(false);
   }, [play]);
@@ -234,8 +275,8 @@ export function SoundProvider({ children }: { children: ReactNode }) {
   }, [play]);
 
   const api = useMemo(
-    () => ({ enabled, toggle, rustle, tick, chime, bonk, fanfare }),
-    [enabled, toggle, rustle, tick, chime, bonk, fanfare],
+    () => ({ enabled, toggle, rustle, tick, chime, bonk, fanfare, clip }),
+    [enabled, toggle, rustle, tick, chime, bonk, fanfare, clip],
   );
   return <SoundContext.Provider value={api}>{children}</SoundContext.Provider>;
 }
