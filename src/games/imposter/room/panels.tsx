@@ -2,6 +2,7 @@
 
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useId, useRef, useState, type FormEvent } from "react";
+import { useSound } from "@/components/fx/Sound";
 import { TornEdge } from "@/components/paper/TornEdge";
 import { Annotate } from "@/components/sketch/Annotate";
 import { DoodleAvatar, AVATAR_NAMES } from "@/components/sketch/DoodleAvatar";
@@ -516,6 +517,16 @@ export function ResultPanel({ state, you, send }: PanelProps) {
     const t = window.setTimeout(() => setRevealed(true), reduced ? 300 : 1500);
     return () => window.clearTimeout(t);
   }, [reduced]);
+
+  // The stamp lands with a sound everyone hears (imposter included); rounds
+  // that end early (imposter fled, too few players) stay silent.
+  const { clip } = useSound();
+  const resultOutcome = result.outcome;
+  useEffect(() => {
+    if (!revealed) return;
+    if (resultOutcome === "CAUGHT") clip("caught");
+    else if (resultOutcome === "ESCAPED") clip("escaped");
+  }, [revealed, resultOutcome, clip]);
 
   // Everyone dealt in, most votes first. Voting is anonymous: counts only.
   const counted = (state.round?.playerIds ?? Object.keys(result.tally))

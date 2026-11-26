@@ -99,6 +99,9 @@ export const sound = {
     check: { src: "/sounds/chess-check.mp3", gain: 1 },
     victory: { src: "/sounds/chess-victory.mp3", gain: 3.5 },
     defeat: { src: "/sounds/chess-defeat.mp3", gain: 0.75 },
+    /** Imposter results: everyone hears the same one. */
+    caught: { src: "/sounds/imposter-caught.mp3", gain: 1.4 },
+    escaped: { src: "/sounds/imposter-escaped.mp3", gain: 1 },
   },
   fanfare: {
     notes: [
